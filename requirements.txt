@@ -1,7 +1,9 @@
 fastapi
 uvicorn
-joblib
-optuna
-scikit-learn
 pandas
 numpy
+scikit-learn
+optuna
+sqlalchemy
+python-dateutil
+pytz

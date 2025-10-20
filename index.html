@@ -1,0 +1,3588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criclytics - Cricket Analytics Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #F9FAFB;
+        }
+        .sidebar-link.active {
+             background-color: #4f46e5;
+             color: #ffffff;
+        }
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: grid;
+        }
+        .result-card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            color: #d1d5db;
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #374151;
+        }
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #9ca3af;
+        }
+        .metric-value {
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .winner-card {
+            background: linear-gradient(145deg, #374151, #1f2937);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .stat-card {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 0.25rem;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        .data-table th {
+            background-color: #374151;
+            color: #d1d5db;
+            font-weight: 600;
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #4b5563;
+        }
+        .data-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #374151;
+            color: #d1d5db;
+        }
+        .data-table tr:hover {
+            background-color: #1f2937;
+        }
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        .player-search-container {
+            position: relative;
+        }
+        .player-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .player-suggestion {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid #374151;
+        }
+        .player-suggestion:hover {
+            background: #374151;
+        }
+        .player-suggestion:last-child {
+            border-bottom: none;
+        }
+        .key-player-card {
+            background: linear-gradient(145deg, #1e3a8a, #1e40af);
+            border: 1px solid #3b82f6;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        .key-player-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+        .phase-card {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+        .phase-powerplay {
+            border-left: 4px solid #10b981;
+        }
+        .phase-middle {
+            border-left: 4px solid #f59e0b;
+        }
+        .phase-death {
+            border-left: 4px solid #ef4444;
+        }
+        .form-indicator {
+            flex: 1;
+            height: 2rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+        .form-win {
+            background-color: #10b981;
+            color: white;
+        }
+        .form-loss {
+            background-color: #ef4444;
+            color: white;
+        }
+        .wagon-wheel {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            margin: 0 auto;
+        }
+        .cricket-field {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #4b5563;
+            border-radius: 50%;
+            position: relative;
+            background: #1f2937;
+        }
+        .shot-zone {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            text-align: center;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .shot-zone:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        .shot-zone-runs {
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .shot-zone-details {
+            font-size: 0.6rem;
+            font-weight: 500;
+            line-height: 1;
+            margin-top: 2px;
+        }
+        .heatmap-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .heatmap-intensity-0 { background-color: #1f2937; }
+        .heatmap-intensity-1 { background-color: #065f46; }
+        .heatmap-intensity-2 { background-color: #047857; }
+        .heatmap-intensity-3 { background-color: #059669; }
+        .heatmap-intensity-4 { background-color: #10b981; }
+        .heatmap-intensity-5 { background-color: #34d399; }
+
+        /* Progression image container (prevents layout jump & white flash) */
+.progression-wrap {
+  background: #0f172a;            /* dark background to match site */
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;          /* reserves space */
+  overflow: hidden;
+  padding: 8px;
+}
+
+/* Image styling: fills container, preserves ratio, no jank */
+.progression-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  image-rendering: auto;
+  background: transparent;
+}
+
+    </style>
+
+    <style>
+
+        /* ensure anchor jumps don't hide under fixed header */
+#player-comparison-section { scroll-margin-top: 96px; }
+/* make sure suggestions appear above content and don't cause scroll lock */
+.player-suggestions { z-index: 60; max-height: 260px; overflow:auto; }
+/* ensure suggestion items look clickable */
+.player-suggestion { padding: 8px; cursor: pointer; }
+/* in case some other code sets overflow hidden accidentally, allow body scroll */
+body { overflow-y: auto !important; }
+
+.stat-box {
+  @apply bg-gray-800 rounded-lg p-4 text-center border border-gray-700;
+}
+.stat-label {
+  @apply text-sm text-gray-400 mb-1;
+}
+.stat-value {
+  @apply text-lg font-bold text-white;
+}
+.suggestions-box {
+  @apply absolute bg-gray-800 text-white rounded-lg mt-1 border border-gray-700 w-full z-10;
+}
+.player-suggestion {
+  @apply px-3 py-2 hover:bg-gray-700 cursor-pointer;
+}
+</style>
+</head>
+<body class="antialiased">
+<div class="flex min-h-screen bg-gray-900">
+        <aside class="w-20 md:w-64 bg-gray-800 flex flex-col items-center md:items-start transition-all duration-300">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700 w-full">
+                <svg class="h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 12h-3a7.5 7.5 0 000-12h3z" />
+                </svg>
+                <span class="hidden md:inline text-xl font-bold ml-3 text-white">Criclytics</span>
+            </div>
+            <nav class="flex-grow mt-5 space-y-2 w-full px-2">
+                <a href="#pre-match-predictor" class="sidebar-link active flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
+                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="hidden md:inline ml-4">Pre-Match Predictor</span>
+                </a>
+                <a href="#batsmen-stats" class="sidebar-link flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span class="hidden md:inline ml-4">Batsmen Analysis</span>
+                </a>
+                <a href="#bowler-stats" class="sidebar-link flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span class="hidden md:inline ml-4">Bowler Analysis</span>
+                </a>
+                <!-- Player-to-Player Comparison sidebar link -->
+<a href="#player-comparison-section"
+   class="sidebar-link flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors"
+   data-target="player-comparison-section"
+   role="button"
+   aria-controls="player-comparison-section"
+   aria-expanded="false">
+  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 7a4 4 0 110-8 4 4 0 010 8zm8 0a4 4 0 110-8 4 4 0 010 8zM2 21l4-4m16 4l-4-4" />
+  </svg>
+  <span class="hidden md:inline ml-4">Player Comparison</span>
+</a>
+
+
+<!-- Innings Progression sidebar link -->
+<a href="#innings-progression" class="sidebar-link flex items-center p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+    <span class="hidden md:inline ml-4">Innings Progression</span>
+</a>
+
+            </nav>
+        </aside>
+
+<div class="flex-1 flex flex-col min-h-0">
+            <header class="bg-gray-800 border-b border-gray-700 p-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-semibold text-white" id="page-title">Pre-Match Predictor</h1>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 md:p-6 lg:p-8">
+                
+                <!-- Pre-Match Predictor Section -->
+<!-- ðŸ§© Pre-Match Predictor Section -->
+<!-- ðŸ§© Pre-Match Predictor Section -->
+<section id="pre-match-predictor" class="page-section active grid-cols-1 gap-6">
+  <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+    <h2 class="text-xl font-bold text-white mb-4">New Match Prediction</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 items-end">
+
+      <!-- ðŸŸ¡ Team A -->
+      <div class="w-full">
+        <label for="team-a" class="block mb-2 text-sm font-medium text-gray-300">Team A</label>
+        <select id="team-a"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+          disabled>
+          <option value="">Loading teams...</option>
+        </select>
+      </div>
+
+      <!-- ðŸŸ¡ Team B -->
+      <div class="w-full">
+        <label for="team-b" class="block mb-2 text-sm font-medium text-gray-300">Team B</label>
+        <select id="team-b"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+          disabled>
+          <option value="">Loading teams...</option>
+        </select>
+      </div>
+
+      <!-- ðŸŸ¢ Venue -->
+      <div class="w-full md:col-span-3 lg:col-span-1">
+        <label for="venue" class="block mb-2 text-sm font-medium text-gray-300">Venue (Optional)</label>
+        <input type="text" id="venue" list="venue-list"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+          placeholder="e.g. Eden Gardens, Kolkata">
+        <datalist id="venue-list"></datalist>
+      </div>
+
+      <!-- ðŸŸ¢ Season -->
+      <div class="w-full">
+        <label for="season" class="block mb-2 text-sm font-medium text-gray-300">Season</label>
+        <select id="season"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+          disabled>
+          <option value="all">Loading seasons...</option>
+        </select>
+      </div>
+
+      <!-- ðŸŸ¢ Toss Winner -->
+      <div class="w-full">
+        <label for="toss-winner" class="block mb-2 text-sm font-medium text-gray-300">Toss Winner</label>
+        <select id="toss-winner"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+          disabled>
+          <option value="">Select teams first</option>
+        </select>
+      </div>
+
+      <!-- ðŸŸ¢ Toss Decision -->
+      <div class="w-full">
+        <label for="toss-decision" class="block mb-2 text-sm font-medium text-gray-300">Toss Decision</label>
+        <select id="toss-decision"
+          class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+          <option value="">Select</option>
+          <option value="Bat">Bat</option>
+          <option value="Field">Field</option>
+        </select>
+      </div>
+
+      <!-- ðŸŸ¢ Predict Button -->
+      <div class="w-full">
+        <button id="predict-btn"
+          class="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-300">
+          Predict Winner
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ðŸ”½ Results Section -->
+  <div id="results-section" class="mt-2 hidden">
+    <div id="loader" class="text-center py-10 hidden">
+      <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+      </svg>
+      <p class="mt-4 text-lg text-gray-400">Training models and making a prediction...</p>
+    </div>
+
+    <div id="error-message" class="result-card bg-red-900/50 border-red-700 text-red-300 hidden"></div>
+    <div id="results-content" class="hidden">
+      <!-- Win Probability Visualization -->
+      <div class="result-card winner-card mb-6">
+        <h2 class="text-xl font-semibold text-gray-300 mb-4 text-center">Win Probability</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div class="flex justify-center">
+            <div class="relative w-64 h-64">
+              <canvas id="probability-donut"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="donut-winner" class="text-2xl font-bold text-white"></span>
+                <span id="donut-percentage" class="text-lg text-gray-300"></span>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-6">
+            <div>
+              <div class="flex justify-between mb-2">
+                <span id="team-a-bar-label" class="font-medium text-blue-400">Team A</span>
+                <span id="team-a-bar-value" class="font-bold text-white">0%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-4">
+                <div id="team-a-bar"
+                  class="bg-blue-600 h-4 rounded-full transition-all duration-1000 ease-out" style="width: 0%">
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-2">
+                <span id="team-b-bar-label" class="font-medium text-red-400">Team B</span>
+                <span id="team-b-bar-value" class="font-bold text-white">0%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-4">
+                <div id="team-b-bar"
+                  class="bg-red-600 h-4 rounded-full transition-all duration-1000 ease-out" style="width: 0%">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Momentum Indicators -->
+      <div class="result-card mb-6">
+        <h3 class="text-xl font-semibold mb-4 text-white">Recent Form & Momentum</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 id="momentum-team-a" class="text-lg font-semibold mb-3 text-blue-400">Team A Form</h4>
+            <div class="flex space-x-2" id="team-a-momentum"></div>
+            <p class="text-sm text-gray-400 mt-2">Last 5 matches</p>
+          </div>
+          <div>
+            <h4 id="momentum-team-b" class="text-lg font-semibold mb-3 text-red-400">Team B Form</h4>
+            <div class="flex space-x-2" id="team-b-momentum"></div>
+            <p class="text-sm text-gray-400 mt-2">Last 5 matches</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Venue Insights -->
+      <div class="result-card mb-6">
+        <h3 class="text-xl font-semibold mb-4 text-white">Venue Insights</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-lg font-semibold mb-3 text-green-400">Win Distribution</h4>
+            <div class="h-48"><canvas id="venue-win-chart"></canvas></div>
+          </div>
+          <div>
+            <h4 class="text-lg font-semibold mb-3 text-yellow-400">Chasing vs Defending</h4>
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-gray-300">Batting First Wins</span>
+                  <span id="batting-first-pct" class="text-sm font-semibold text-white">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-3">
+                  <div id="batting-first-bar" class="bg-yellow-500 h-3 rounded-full transition-all duration-1000"
+                    style="width: 0%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-sm text-gray-300">Chasing Wins</span>
+                  <span id="chasing-pct" class="text-sm font-semibold text-white">0%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-3">
+                  <div id="chasing-bar" class="bg-green-500 h-3 rounded-full transition-all duration-1000"
+                    style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Players Analysis -->
+      <div class="result-card mb-6">
+        <h3 class="text-xl font-semibold mb-4 text-white">Key Players Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div id="results-team-a-key-players">
+            <h4 id="results-team-a-name" class="text-lg font-semibold mb-3 text-blue-400">Team A</h4>
+            <div id="results-team-a-key-players-content"></div>
+          </div>
+          <div id="results-team-b-key-players">
+            <h4 id="results-team-b-name" class="text-lg font-semibold mb-3 text-red-400">Team B</h4>
+            <div id="results-team-b-key-players-content"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ðŸ”¥ Top Player Rivalries -->
+      <div class="result-card mb-6">
+        <h3 class="text-xl font-semibold mb-4 text-white">Top Player Rivalries</h3>
+        <div id="top-rivalries-container" class="space-y-3"></div>
+      </div>
+
+      <!-- Head-to-Head & Venue Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="result-card">
+          <h3 class="text-lg font-semibold mb-3 text-white">Head-to-Head Stats</h3>
+          <div id="h2h-stats" class="text-sm space-y-2"></div>
+        </div>
+        <div class="result-card">
+          <h3 class="text-lg font-semibold mb-3 text-white"><span id="team-a-name-stats">Team A</span> Venue Stats</h3>
+          <div id="team-a-stats" class="text-sm space-y-2"></div>
+        </div>
+        <div class="result-card">
+          <h3 class="text-lg font-semibold mb-3 text-white"><span id="team-b-name-stats">Team B</span> Venue Stats</h3>
+          <div id="team-b-stats" class="text-sm space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+                <!-- Batsmen Analysis Section -->
+                <section id="batsmen-stats" class="page-section grid-cols-1 gap-6">
+                    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+                         <h2 class="text-xl font-bold text-white mb-4">Batsmen Analysis</h2>
+                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-2 player-search-container">
+                                <label for="batsman-input" class="block mb-2 text-sm font-medium text-gray-300">Batsman Name</label>
+                                <input type="text" id="batsman-input" 
+                                       class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5" 
+                                       placeholder="Start typing to search batsmen..."
+                                       autocomplete="off">
+                                <div id="batsman-suggestions" class="player-suggestions hidden"></div>
+                            </div>
+                            <div>
+                                <label for="batsman-season-select" class="block mb-2 text-sm font-medium text-gray-300">Season</label>
+                                <select id="batsman-season-select" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5">
+                                    <option value="all">All Seasons</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button id="analyze-batsman-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2.5 font-medium transition-colors duration-300">
+                                    Analyze Batsman
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="show-all-batsmen-btn" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                 Show All Batsmen List
+                            </button>
+                            <div id="all-batsmen-list" class="mt-3 p-4 bg-gray-900 rounded-lg border border-gray-700 hidden">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="text-lg font-semibold text-white">All Batsmen</h3>
+                                    <button id="close-batsmen-list" class="text-gray-400 hover:text-white">
+                                        âœ•
+                                    </button>
+                                </div>
+                                <div class="max-h-60 overflow-y-auto">
+                                    <div id="batsmen-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="batsmen-connection-status" class="mt-4 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg hidden">
+                            <p class="text-yellow-300 text-sm">Using demo data. Start the backend server for real-time analysis.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="batsmen-analysis-results" class="hidden">
+                        <div id="batsmen-loader" class="text-center py-10 hidden">
+                            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg text-gray-400">Analyzing batsman performance...</p>
+                        </div>
+                        
+                        <div id="batsmen-results-content" class="hidden space-y-6">
+                            <!-- Batsman Header Card -->
+                            <div class="result-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h2 id="batsman-name-header" class="text-3xl font-bold text-white mb-2">Batsman Name</h2>
+                                        <div class="flex items-center gap-4 text-sm text-gray-400">
+                                            <span id="batsman-team">Team: N/A</span>
+                                            <span id="batsman-role">Role: N/A</span>
+                                            <span id="batsman-matches">Matches: 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Key Stats Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                                <div class="stat-card">
+                                    <div class="stat-label">Total Runs</div>
+                                    <div id="total-runs" class="stat-value">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Balls Faced</div>
+                                    <div id="total-balls" class="stat-value">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Average</div>
+                                    <div id="batting-avg" class="stat-value">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Strike Rate</div>
+                                    <div id="strike-rate" class="stat-value">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Fifties</div>
+                                    <div id="fifties" class="stat-value">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Hundreds</div>
+                                    <div id="hundreds" class="stat-value">0</div>
+                                </div>
+                            </div>
+
+                          
+
+                            <!-- Scoring Phase Breakdown -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Scoring Phase Breakdown</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="phase-card phase-powerplay">
+                                        <h4 class="text-lg font-semibold text-green-400 mb-3">Powerplay (1-6)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Runs:</span>
+                                                <span id="powerplay-runs" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="powerplay-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Boundaries:</span>
+                                                <span id="powerplay-boundaries" class="font-bold text-white">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-middle">
+                                        <h4 class="text-lg font-semibold text-yellow-400 mb-3">Middle (7-15)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Runs:</span>
+                                                <span id="middle-runs" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="middle-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Boundaries:</span>
+                                                <span id="middle-boundaries" class="font-bold text-white">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-death">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-3">Death (16-20)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Runs:</span>
+                                                <span id="death-runs" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="death-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Boundaries:</span>
+                                                <span id="death-boundaries" class="font-bold text-white">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Streaks -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Form & Recent Performance</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="text-lg font-semibold mb-3 text-blue-400">Milestone Streaks</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400">Innings since last 50:</span>
+                                                <span id="innings-since-50" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400">Innings since last 100:</span>
+                                                <span id="innings-since-100" class="font-bold text-white">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold mb-3 text-green-400">Recent Form (Last 10)</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400">Recent Average:</span>
+                                                <span id="recent-average" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400">Recent Strike Rate:</span>
+                                                <span id="recent-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pressure Index -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Pressure Performance</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-purple-400 mb-2">Chasing</h4>
+                                        <div class="space-y-1">
+                                            <div>Avg: <span id="chasing-avg" class="font-bold">0.00</span></div>
+                                            <div>SR: <span id="chasing-sr" class="font-bold">0.00</span></div>
+                                            <div class="text-sm text-gray-400"><span id="chasing-innings">0</span> inns</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-orange-400 mb-2">Setting Target</h4>
+                                        <div class="space-y-1">
+                                            <div>Avg: <span id="setting-avg" class="font-bold">0.00</span></div>
+                                            <div>SR: <span id="setting-sr" class="font-bold">0.00</span></div>
+                                            <div class="text-sm text-gray-400"><span id="setting-innings">0</span> inns</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-2">Death Overs</h4>
+                                        <div class="space-y-1">
+                                            <div>SR: <span id="death-over-sr" class="font-bold">0.00</span></div>
+                                            <div>Boundary %: <span id="death-boundary-pct" class="font-bold">0%</span></div>
+                                            <div class="text-sm text-gray-400"><span id="death-runs-total">0</span> runs</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Boundaries -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Boundary Analysis</h3>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <div class="text-3xl font-bold text-blue-400" id="fours-count">0</div>
+                                        <div class="text-sm text-gray-400 mt-1">Fours</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <div class="text-3xl font-bold text-purple-400" id="sixes-count">0</div>
+                                        <div class="text-sm text-gray-400 mt-1">Sixes</div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <div class="text-3xl font-bold text-green-400" id="boundary-pct">0%</div>
+                                        <div class="text-sm text-gray-400 mt-1">Boundary %</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Venue Performance -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Venue-wise Performance (Top 10)</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Venue</th>
+                                                <th class="text-right">Runs</th>
+                                                <th class="text-right">Balls</th>
+                                                <th class="text-right">Outs</th>
+                                                <th class="text-right">Average</th>
+                                                <th class="text-right">Strike Rate</th>
+                                                <th class="text-right">50s</th>
+                                                <th class="text-right">100s</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="venue-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Bowler Matchups -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Performance vs Bowlers (Most Faced)</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Bowler</th>
+                                                <th class="text-right">Runs</th>
+                                                <th class="text-right">Balls</th>
+                                                <th class="text-right">Outs</th>
+                                                <th class="text-right">Strike Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bowler-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Dismissal Patterns -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Dismissal Patterns</h3>
+                                <div id="dismissal-chart" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Bowler Analysis Section -->
+                <section id="bowler-stats" class="page-section grid-cols-1 gap-6">
+                    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+                         <h2 class="text-xl font-bold text-white mb-4">Bowler Analysis</h2>
+                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-2 player-search-container">
+                                <label for="bowler-input" class="block mb-2 text-sm font-medium text-gray-300">Bowler Name</label>
+                                <input type="text" id="bowler-input" 
+                                       class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5" 
+                                       placeholder="Start typing to search bowlers..."
+                                       autocomplete="off">
+                                <div id="bowler-suggestions" class="player-suggestions hidden"></div>
+                            </div>
+                            <div>
+                                <label for="bowler-season-select" class="block mb-2 text-sm font-medium text-gray-300">Season</label>
+                                <select id="bowler-season-select" class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5">
+                                    <option value="all">All Seasons</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button id="analyze-bowler-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2.5 font-medium transition-colors duration-300">
+                                    Analyze Bowler
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="show-all-bowlers-btn" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                Show All Bowlers List
+                            </button>
+                            <div id="all-bowlers-list" class="mt-3 p-4 bg-gray-900 rounded-lg border border-gray-700 hidden">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="text-lg font-semibold text-white">All Bowlers</h3>
+                                    <button id="close-bowlers-list" class="text-gray-400 hover:text-white">
+                                        âœ•
+                                    </button>
+                                </div>
+                                <div class="max-h-60 overflow-y-auto">
+                                    <div id="bowlers-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="bowler-connection-status" class="mt-4 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg hidden">
+                            <p class="text-yellow-300 text-sm">Using demo data. Start the backend server for real-time analysis.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="bowler-analysis-results" class="hidden">
+                        <div id="bowler-loader" class="text-center py-10 hidden">
+                            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg text-gray-400">Analyzing bowler performance...</p>
+                        </div>
+                        
+                        <div id="bowler-results-content" class="hidden space-y-6">
+                            <!-- Bowler Header Card -->
+                            <div class="result-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h2 id="bowler-name-header" class="text-3xl font-bold text-white mb-2">Bowler Name</h2>
+                                        <div class="flex items-center gap-4 text-sm text-gray-400">
+                                            <span id="bowler-team">Team: N/A</span>
+                                            <span id="bowler-role">Role: N/A</span>
+                                            <span id="bowler-matches">Matches: 0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Key Stats Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                                <div class="stat-card">
+                                    <div class="stat-label">Total Wickets</div>
+                                    <div id="total-wickets" class="stat-value">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Balls Bowled</div>
+                                    <div id="total-balls-bowled" class="stat-value">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Economy Rate</div>
+                                    <div id="economy-rate" class="stat-value">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Strike Rate</div>
+                                    <div id="bowler-strike-rate" class="stat-value">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Average</div>
+                                    <div id="bowling-avg" class="stat-value">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Best Figures</div>
+                                    <div id="best-figures" class="stat-value">N/A</div>
+                                </div>
+                            </div>
+
+                           
+
+                            <!-- Phase-wise Performance -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Phase-wise Performance</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="phase-card phase-powerplay">
+                                        <h4 class="text-lg font-semibold text-green-400 mb-3">Powerplay (1-6)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Economy:</span>
+                                                <span id="powerplay-economy" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Wickets:</span>
+                                                <span id="powerplay-wickets" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="powerplay-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-middle">
+                                        <h4 class="text-lg font-semibold text-yellow-400 mb-3">Middle (7-15)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Economy:</span>
+                                                <span id="middle-economy" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Wickets:</span>
+                                                <span id="middle-wickets" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="middle-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-death">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-3">Death (16-20)</h4>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Economy:</span>
+                                                <span id="death-economy" class="font-bold text-white">0.00</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Wickets:</span>
+                                                <span id="death-wickets" class="font-bold text-white">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-400">Strike Rate:</span>
+                                                <span id="death-sr" class="font-bold text-white">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phase-wise vs Hand -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Phase Performance vs Handedness</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="phase-card phase-powerplay">
+                                        <h4 class="text-lg font-semibold text-green-400 mb-3">Powerplay</h4>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-blue-400">vs Left</div>
+                                                <div class="text-xs">Eco: <span id="pp-left-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="pp-left-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-red-400">vs Right</div>
+                                                <div class="text-xs">Eco: <span id="pp-right-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="pp-right-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-middle">
+                                        <h4 class="text-lg font-semibold text-yellow-400 mb-3">Middle</h4>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-blue-400">vs Left</div>
+                                                <div class="text-xs">Eco: <span id="mid-left-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="mid-left-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-red-400">vs Right</div>
+                                                <div class="text-xs">Eco: <span id="mid-right-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="mid-right-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-death">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-3">Death</h4>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-blue-400">vs Left</div>
+                                                <div class="text-xs">Eco: <span id="death-left-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="death-left-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                            <div class="text-center p-2 bg-gray-800 rounded">
+                                                <div class="text-sm text-red-400">vs Right</div>
+                                                <div class="text-xs">Eco: <span id="death-right-eco" class="font-bold">0.00</span></div>
+                                                <div class="text-xs">SR: <span id="death-right-sr" class="font-bold">0.00</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Favorite Victims -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Favorite Victims</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="favorite-victims-grid">
+                                    <!-- Will be populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Economy Under Pressure -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Economy Under Pressure</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-green-400 mb-2">Defending Small Total</h4>
+                                        <div class="space-y-1">
+                                            <div>Economy: <span id="small-total-eco" class="font-bold">0.00</span></div>
+                                            <div>Wickets: <span id="small-total-wkts" class="font-bold">0</span></div>
+                                            <div class="text-sm text-gray-400"><span id="small-total-matches">0</span> matches</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-yellow-400 mb-2">Defending Par Total</h4>
+                                        <div class="space-y-1">
+                                            <div>Economy: <span id="par-total-eco" class="font-bold">0.00</span></div>
+                                            <div>Wickets: <span id="par-total-wkts" class="font-bold">0</span></div>
+                                            <div class="text-sm text-gray-400"><span id="par-total-matches">0</span> matches</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center p-4 bg-gray-800 rounded-lg">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-2">Defending Big Total</h4>
+                                        <div class="space-y-1">
+                                            <div>Economy: <span id="big-total-eco" class="font-bold">0.00</span></div>
+                                            <div>Wickets: <span id="big-total-wkts" class="font-bold">0</span></div>
+                                            <div class="text-sm text-gray-400"><span id="big-total-matches">0</span> matches</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dismissal Types -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Dismissal Types Distribution</h3>
+                                <div id="bowler-dismissal-chart" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                </div>
+                            </div>
+
+                            <!-- Batsmen Matchups -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Performance vs Batsmen (Top 10)</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Batsman</th>
+                                                <th class="text-right">Balls</th>
+                                                <th class="text-right">Runs</th>
+                                                <th class="text-right">Dismissals</th>
+                                                <th class="text-right">Average</th>
+                                                <th class="text-right">Strike Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="batsmen-matchup-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Venue Performance -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Venue-wise Performance (Top 10)</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Venue</th>
+                                                <th class="text-right">Wickets</th>
+                                                <th class="text-right">Runs</th>
+                                                <th class="text-right">Balls</th>
+                                                <th class="text-right">Economy</th>
+                                                <th class="text-right">Strike Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bowler-venue-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ðŸ†• Player Head-to-Head Section -->
+                <section id="player-h2h" class="page-section grid-cols-1 gap-6">
+                    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+                        <h2 class="text-xl font-bold text-white mb-4">Head-to-Head Comparison</h2>
+
+                        <!-- Player text boxes with autocomplete (same as batsmen) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="player-search-container">
+                                <label for="h2h-player-a" class="block mb-2 text-sm font-medium text-gray-300">Player A</label>
+                                <input id="h2h-player-a" type="text"
+                                    class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5"
+                                    placeholder="Start typing player name..." autocomplete="off" />
+                                <div id="h2h-a-suggestions" class="player-suggestions hidden"></div>
+                            </div>
+
+                            <div class="player-search-container">
+                                <label for="h2h-player-b" class="block mb-2 text-sm font-medium text-gray-300">Player B</label>
+                                <input id="h2h-player-b" type="text"
+                                    class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5"
+                                    placeholder="Start typing player name..." autocomplete="off" />
+                                <div id="h2h-b-suggestions" class="player-suggestions hidden"></div>
+                            </div>
+                        </div>
+
+                        <!-- Optional filters -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-4">
+                            <div>
+                                <label for="h2h-season-select" class="block mb-2 text-sm font-medium text-gray-300">Season (Optional)</label>
+                                <select id="h2h-season-select"
+                                        class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5">
+                                    <option value="all">All Seasons</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="h2h-venue-select" class="block mb-2 text-sm font-medium text-gray-300">Venue (Optional)</label>
+                                <select id="h2h-venue-select"
+                                        class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5">
+                                    <option value="all">All Venues</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button id="compare-btn"
+                                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2.5 font-medium transition-colors duration-300">
+                                    Compare Players
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Show All Players buttons -->
+                        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <button id="show-all-h2h-a-btn" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                    ðŸ“‹ Show All Players for Player A
+                                </button>
+                                <div id="all-h2h-a-list" class="mt-3 p-4 bg-gray-900 rounded-lg border border-gray-700 hidden">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h3 class="text-lg font-semibold text-white">All Players</h3>
+                                        <button class="close-h2h-a-list text-gray-400 hover:text-white">âœ•</button>
+                                    </div>
+                                    <div class="max-h-60 overflow-y-auto">
+                                        <div id="h2h-a-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button id="show-all-h2h-b-btn" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium">
+                                    ðŸ“‹ Show All Players for Player B
+                                </button>
+                                <div id="all-h2h-b-list" class="mt-3 p-4 bg-gray-900 rounded-lg border border-gray-700 hidden">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h3 class="text-lg font-semibold text-white">All Players</h3>
+                                        <button class="close-h2h-b-list text-gray-400 hover:text-white">âœ•</button>
+                                    </div>
+                                    <div class="max-h-60 overflow-y-auto">
+                                        <div id="h2h-b-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="h2h-results" class="hidden">
+                        <div id="h2h-loader" class="text-center py-10 hidden">
+                            <svg class="animate-spin h-8 w-8 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg text-gray-400">Comparing players...</p>
+                        </div>
+                        
+                        <div id="h2h-error-message" class="result-card bg-red-900/50 border-red-700 text-red-300 hidden"></div>
+                        
+                        <div id="h2h-results-content" class="hidden space-y-6">
+                            <!-- Head-to-Head Header -->
+                            <div class="result-card">
+                                <h2 id="h2h-title" class="text-3xl font-bold text-white mb-4 text-center">Player A vs Player B</h2>
+                                <div class="flex items-center justify-center gap-4 text-sm text-gray-400">
+                                    <span id="h2h-player-a-team">Team A</span>
+                                    <span class="text-xl">âš¡</span>
+                                    <span id="h2h-player-b-team">Team B</span>
+                                </div>
+                            </div>
+
+                            <!-- Key Stats Comparison -->
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div class="stat-card">
+                                    <div class="stat-label">Runs</div>
+                                    <div id="h2h-runs-a" class="stat-value text-blue-400">0</div>
+                                    <div id="h2h-runs-b" class="stat-value text-red-400">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Average</div>
+                                    <div id="h2h-avg-a" class="stat-value text-blue-400">0.00</div>
+                                    <div id="h2h-avg-b" class="stat-value text-red-400">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Strike Rate</div>
+                                    <div id="h2h-sr-a" class="stat-value text-blue-400">0.00</div>
+                                    <div id="h2h-sr-b" class="stat-value text-red-400">0.00</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Fifties</div>
+                                    <div id="h2h-50s-a" class="stat-value text-blue-400">0</div>
+                                    <div id="h2h-50s-b" class="stat-value text-red-400">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-label">Hundreds</div>
+                                    <div id="h2h-100s-a" class="stat-value text-blue-400">0</div>
+                                    <div id="h2h-100s-b" class="stat-value text-red-400">0</div>
+                                </div>
+                            </div>
+
+                            <!-- Performance Comparison Chart -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Performance Comparison</h3>
+                                <div class="h-64">
+                                    <canvas id="h2h-comparison-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Stats Table -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Detailed Statistics</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th id="h2h-player-a-header" class="text-blue-400 text-right">Player A</th>
+                                                <th id="h2h-player-b-header" class="text-red-400 text-right">Player B</th>
+                                                <th class="text-green-400 text-right">Advantage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="h2h-detailed-stats">
+                                            <!-- Will be populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Phase-wise Comparison -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Phase-wise Comparison</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="phase-card phase-powerplay">
+                                        <h4 class="text-lg font-semibold text-green-400 mb-3">Powerplay (1-6)</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player A SR</div>
+                                                <div id="h2h-pp-sr-a" class="font-bold text-white">0.00</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player B SR</div>
+                                                <div id="h2h-pp-sr-b" class="font-bold text-white">0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-middle">
+                                        <h4 class="text-lg font-semibold text-yellow-400 mb-3">Middle (7-15)</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player A SR</div>
+                                                <div id="h2h-mid-sr-a" class="font-bold text-white">0.00</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player B SR</div>
+                                                <div id="h2h-mid-sr-b" class="font-bold text-white">0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-card phase-death">
+                                        <h4 class="text-lg font-semibold text-red-400 mb-3">Death (16-20)</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player A SR</div>
+                                                <div id="h2h-death-sr-a" class="font-bold text-white">0.00</div>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm text-gray-400">Player B SR</div>
+                                                <div id="h2h-death-sr-b" class="font-bold text-white">0.00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Form -->
+                            <div class="result-card">
+                                <h3 class="text-xl font-semibold mb-4 text-white">Recent Form (Last 10 Matches)</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 id="h2h-recent-player-a" class="text-lg font-semibold mb-3 text-blue-400">Player A</h4>
+                                        <div class="flex space-x-2" id="h2h-recent-form-a">
+                                            <!-- Will be populated with score indicators -->
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 id="h2h-recent-player-b" class="text-lg font-semibold mb-3 text-red-400">Player B</h4>
+                                        <div class="flex space-x-2" id="h2h-recent-form-b">
+                                            <!-- Will be populated with score indicators -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </section>
+<!-- ===== Player-to-Player Comparison (REPLACEMENT BLOCK) ===== -->
+<section id="player-comparison-section"
+         class="page-section mt-6 p-6 bg-gray-900 rounded-2xl shadow-lg border border-gray-700"
+         style="position: static; z-index: 1; scroll-margin-top: 96px;">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl font-bold text-white mb-4 text-center">Player-to-Player Comparison</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+      <!-- Player A -->
+      <div class="player-search-container">
+        <label for="player-a-input" class="block mb-2 text-sm font-medium text-gray-300">Player A</label>
+        <input type="text" id="player-a-input"
+               class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5"
+               placeholder="Enter Player A" autocomplete="off" />
+            <div id="player-a-suggestions" class="player-suggestions hidden"></div>
+            </div>
+
+      <!-- Player B -->
+      <div class="player-search-container">
+        <label for="player-b-input" class="block mb-2 text-sm font-medium text-gray-300">Player B</label>
+        <input type="text" id="player-b-input"
+               class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5"
+               placeholder="Enter Player B" autocomplete="off" />
+        <div id="player-b-suggestions" class="player-suggestions hidden"></div>
+      </div>
+
+      <!-- Comparison Type -->
+      <div>
+        <label for="player-compare-role" class="block mb-2 text-sm font-medium text-gray-300">Comparison Type</label>
+        <select id="player-compare-role"
+                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-2.5">
+          <option value="batsman_vs_bowler">Batsman vs Bowler</option>
+          <option value="batsman_vs_batsman">Batsman vs Batsman</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center space-x-4">
+      <button id="player-compare-btn"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-6 py-2.5 font-medium transition-colors">
+        Compare
+      </button>
+
+      <div id="player-compare-loader" class="hidden text-gray-300 text-sm">Loading…</div>
+      <div id="player-compare-error" class="hidden text-red-400 text-sm"></div>
+    </div>
+
+    <!-- Results (numeric only, adaptive labels) -->
+    <div id="player-compare-results" class="hidden mt-6 grid grid-cols-1 gap-4">
+      <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+        <div class="flex justify-between items-center">
+          <div>
+            <div id="pc-playerA-role" class="text-sm text-gray-400">Player A</div>
+            <div id="pc-playerA-name" class="text-xl font-bold text-white">Player A</div>
+          </div>
+          <div>
+            <div id="pc-playerB-role" class="text-sm text-gray-400">Player B</div>
+            <div id="pc-playerB-name" class="text-xl font-bold text-white">Player B</div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
+          <!-- Player A metric slots (label + value) -->
+          <div>
+            <div id="label-a-1" class="text-sm text-gray-400">Runs</div>
+            <div id="pc-playerA-runs" class="text-lg font-medium text-white">0</div>
+          </div>
+          <div>
+            <div id="label-a-2" class="text-sm text-gray-400">Average</div>
+            <div id="pc-playerA-avg" class="text-lg font-medium text-white">0.00</div>
+          </div>
+          <div>
+            <div id="label-a-3" class="text-sm text-gray-400">SR</div>
+            <div id="pc-playerA-sr" class="text-lg font-medium text-white">0.00</div>
+          </div>
+          <div>
+            <div id="label-a-4" class="text-sm text-gray-400">Innings</div>
+            <div id="pc-playerA-inn" class="text-lg font-medium text-white">0</div>
+          </div>
+          <div>
+            <div id="label-a-5" class="text-sm text-gray-400">Balls</div>
+            <div id="pc-playerA-balls" class="text-lg font-medium text-white">0</div>
+          </div>
+
+          <!-- Player B metric slots (label + value) -->
+          <div>
+            <div id="label-b-1" class="text-sm text-gray-400">Runs</div>
+            <div id="pc-playerB-runs" class="text-lg font-medium text-white">0</div>
+          </div>
+          <div>
+            <div id="label-b-2" class="text-sm text-gray-400">Average</div>
+            <div id="pc-playerB-avg" class="text-lg font-medium text-white">0.00</div>
+          </div>
+          <div>
+            <div id="label-b-3" class="text-sm text-gray-400">SR</div>
+            <div id="pc-playerB-sr" class="text-lg font-medium text-white">0.00</div>
+          </div>
+          <div>
+            <div id="label-b-4" class="text-sm text-gray-400">Innings</div>
+            <div id="pc-playerB-inn" class="text-lg font-medium text-white">0</div>
+          </div>
+          <div>
+            <div id="label-b-5" class="text-sm text-gray-400">Balls</div>
+            <div id="pc-playerB-balls" class="text-lg font-medium text-white">0</div>
+          </div>
+        </div>
+
+        <div class="mt-4 text-sm text-gray-300" id="pc-additional-info"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ===== End Player-to-Player Comparison ===== -->
+
+<!-- ===== Innings Progression Section (updated, simplified) ===== -->
+<section id="innings-progression" class="page-section w-full max-w-4xl bg-gray-900 rounded-2xl shadow-lg p-6 border border-gray-700">
+  <h2 class="text-2xl font-bold mb-4">Innings Progression Analysis</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div>
+      <label for="progression-team" class="block text-gray-300 mb-1">Team</label>
+      <select id="progression-team" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-600">
+        <option value="">Loading teams...</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="progression-innings" class="block text-gray-300 mb-1">Innings</label>
+      <select id="progression-innings" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-600">
+        <option value="1">1st Innings</option>
+        <option value="2">2nd Innings</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="progression-year" class="block text-gray-300 mb-1">Year / Season</label>
+      <select id="progression-year" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-600">
+        <option value="">Loading seasons...</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="progression-venue" class="block text-gray-300 mb-1">Venue (optional)</label>
+      <input id="progression-venue" list="venue-list-progression" type="text"
+             class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-600"
+             placeholder="e.g. Wankhede Stadium" />
+      <datalist id="venue-list-progression"></datalist>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button id="analyze-progression-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">Analyze Progression</button>
+    <div id="progression-loader" class="hidden text-gray-400">⏳ Loading...</div>
+  </div>
+
+  <p id="progression-error" class="hidden text-red-400 mt-3" role="status" aria-live="polite"></p>
+
+  <!-- results container (script expects these elements) -->
+  <div id="progression-results" class="hidden mt-6">
+    <div id="progression-content" class="hidden">
+      <!-- Minimal placeholders kept so JS can populate them if needed -->
+      
+
+     <!-- container for multiple per-match plots (responsive grid) -->
+<div id="progression-container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px" class="mb-4"></div>
+<div id="progression-summary" class="text-gray-300 text-sm"></div>
+
+    </div>
+  </div>
+</section>
+            </main>
+        </div>
+    </div>
+    
+<script>
+  // ensure globals for cross-script usage
+  window.API_BASE_URL = window.API_BASE_URL || 'http://127.0.0.1:8000';
+  window.allTeams = window.allTeams || [];
+  window.allBatsmen = window.allBatsmen || [];
+  window.allBowlers = window.allBowlers || [];
+  window.allPlayers = window.allPlayers || [];
+  window.usingDemoData = window.usingDemoData || false;
+</script>
+
+<script>
+// ============================================================================
+// GLOBAL CONFIGURATION & STATE
+// ============================================================================
+const API_BASE_URL = 'http://127.0.0.1:8000';
+let allTeams = [];
+let allBatsmen = [];
+let allBowlers = [];
+let allPlayers = [];
+let allSeasons = [];
+let allVenues = [];
+
+// Chart instances
+let probabilityDonutChart = null;
+let venueWinChart = null;
+let h2hComparisonChart = null;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function safeNum(v, decimals = 2) {
+    const n = Number(v);
+    if (!isFinite(n)) return (0).toFixed(decimals);
+    return n.toFixed(decimals);
+}
+
+function showElement(element) {
+    if (element) element.classList.remove('hidden');
+}
+
+function hideElement(element) {
+    if (element) element.classList.add('hidden');
+}
+
+function setText(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (el) el.textContent = value || '0';
+}
+
+function setNumberText(elementId, value, decimals = 2) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        if (value === null || value === undefined || value === '') {
+            el.textContent = safeNum(0, decimals);
+        } else if (isNaN(Number(value))) {
+            el.textContent = String(value);
+        } else {
+            el.textContent = safeNum(value, decimals);
+        }
+    }
+}
+
+function populateSelect(selectElement, options, placeholder) {
+    if (!selectElement) return;
+    selectElement.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+    options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option;
+        opt.textContent = option;
+        selectElement.appendChild(opt);
+    });
+}
+// ============================================================================
+// SECTION 1: PRE-MATCH PREDICTOR
+// ============================================================================
+
+async function initializePredictorForm() {
+    try {
+        const [teamsRes, venuesRes, seasonsRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/teams`),
+            fetch(`${API_BASE_URL}/api/venues`),
+            fetch(`${API_BASE_URL}/api/seasons`)
+        ]);
+        
+        if (teamsRes.ok) {
+            const data = await teamsRes.json();
+            allTeams = Array.isArray(data) ? data : (data.teams || []);
+            const teamASelect = document.getElementById('team-a');
+            const teamBSelect = document.getElementById('team-b');
+            const tossWinnerSelect = document.getElementById('toss-winner');
+            
+            populateSelect(teamASelect, allTeams, 'Select Team A');
+            populateSelect(teamBSelect, allTeams, 'Select Team B');
+            populateSelect(tossWinnerSelect, [], 'Select Teams First');
+            
+            teamASelect.disabled = false;
+            teamBSelect.disabled = false;
+            
+            teamASelect.addEventListener('change', updateTossWinnerOptions);
+            teamBSelect.addEventListener('change', updateTossWinnerOptions);
+        }
+
+        if (venuesRes.ok) {
+            const data = await venuesRes.json();
+            allVenues = Array.isArray(data) ? data : (data.venues || []);
+            const venueList = document.getElementById('venue-list');
+            if (venueList) {
+                venueList.innerHTML = '';
+                allVenues.forEach(venue => {
+                    const option = document.createElement('option');
+                    option.value = venue;
+                    venueList.appendChild(option);
+                });
+            }
+        }
+
+        if (seasonsRes.ok) {
+            const data = await seasonsRes.json();
+            allSeasons = Array.isArray(data) ? data : (data.seasons || []);
+            const seasonSelect = document.getElementById('season');
+            if (seasonSelect) {
+                seasonSelect.innerHTML = '<option value="">All Seasons</option>';
+                allSeasons.forEach(s => {
+                    seasonSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                });
+                seasonSelect.disabled = false;
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing predictor:', error);
+    }
+}
+
+function updateTossWinnerOptions() {
+    const teamA = document.getElementById('team-a')?.value;
+    const teamB = document.getElementById('team-b')?.value;
+    const tossSelect = document.getElementById('toss-winner');
+    
+    if (!tossSelect) return;
+    
+    tossSelect.innerHTML = '';
+    if (!teamA && !teamB) {
+        tossSelect.innerHTML = '<option>Select teams first</option>';
+        tossSelect.disabled = true;
+        return;
+    }
+    
+    tossSelect.disabled = false;
+    tossSelect.innerHTML = '<option value="">Select Toss Winner</option>';
+    if (teamA) tossSelect.innerHTML += `<option value="${teamA}">${teamA}</option>`;
+    if (teamB && teamB !== teamA) tossSelect.innerHTML += `<option value="${teamB}">${teamB}</option>`;
+}
+
+async function handlePredictClick() {
+    const teamA = document.getElementById('team-a')?.value;
+    const teamB = document.getElementById('team-b')?.value;
+    const venue = document.getElementById('venue')?.value || null;
+    const season = document.getElementById('season')?.value || null;
+    const tossWinner = document.getElementById('toss-winner')?.value || null;
+    const tossDecision = document.getElementById('toss-decision')?.value || null;
+
+    if (!teamA || !teamB) {
+        alert('Please select both teams');
+        return;
+    }
+
+    const loader = document.getElementById('loader');
+    const errorMessage = document.getElementById('error-message');
+    const resultsContent = document.getElementById('results-content');
+    const resultsSection = document.getElementById('results-section');
+
+    showElement(loader);
+    hideElement(errorMessage);
+    hideElement(resultsContent);
+    showElement(resultsSection);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/predict`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                team_a: teamA,
+                team_b: teamB,
+                venue: venue,
+                season: season,
+                toss_winner: tossWinner,
+                toss_decision: tossDecision
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayPredictionResults(data, teamA, teamB, venue, season);
+        await updateMomentumIndicators(teamA, teamB);
+        await loadTopPlayerRivalries(teamA, teamB, season);
+        await loadHeadToHeadStats(teamA, teamB, venue, season);
+        await loadKeyPlayers(teamA, teamB, season);
+        updateVenueInsights();
+        showElement(resultsContent);
+    } catch (error) {
+        console.error('Prediction error:', error);
+        if (errorMessage) {
+            errorMessage.textContent = `Error: ${error.message}`;
+            showElement(errorMessage);
+        }
+    } finally {
+        hideElement(loader);
+    }
+}
+
+function displayPredictionResults(data, teamA, teamB, venue, season) {
+    // Update team names
+    setText('team-a-bar-label', teamA);
+    setText('team-b-bar-label', teamB);
+    setText('team-a-name-stats', teamA);
+    setText('team-b-name-stats', teamB);
+    setText('results-team-a-name', teamA);
+    setText('results-team-b-name', teamB);
+    setText('momentum-team-a', `${teamA} Form`);
+    setText('momentum-team-b', `${teamB} Form`);
+    
+    // Update prediction visualization
+    updatePredictionVisualization(data, teamA, teamB);
+}
+
+function updatePredictionVisualization(data, teamA, teamB) {
+    const probA = parseFloat(data.probability_a || 0);
+    const probB = parseFloat(data.probability_b || 0);
+    const winner = data.winner;
+    
+    updateProbabilityDonut(probA, probB, teamA, teamB, winner);
+    updateProbabilityBars(probA, probB, teamA, teamB);
+}
+
+function updateProbabilityDonut(probA, probB, teamA, teamB, winner) {
+    const ctx = document.getElementById('probability-donut')?.getContext('2d');
+    if (!ctx) return;
+    
+    if (probabilityDonutChart) {
+        probabilityDonutChart.destroy();
+    }
+    
+    probabilityDonutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [teamA, teamB],
+            datasets: [{
+                data: [probA, probB],
+                backgroundColor: ['#3b82f6', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${(context.parsed * 100).toFixed(1)}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    setText('donut-winner', winner);
+    setText('donut-percentage', `${(winner === teamA ? probA * 100 : probB * 100).toFixed(1)}%`);
+}
+
+function updateProbabilityBars(probA, probB, teamA, teamB) {
+    const teamABar = document.getElementById('team-a-bar');
+    const teamBBar = document.getElementById('team-b-bar');
+    const teamAValue = document.getElementById('team-a-bar-value');
+    const teamBValue = document.getElementById('team-b-bar-value');
+    
+    const teamAPct = (probA * 100).toFixed(1);
+    const teamBPct = (probB * 100).toFixed(1);
+    
+    setTimeout(() => {
+        if (teamABar) teamABar.style.width = `${teamAPct}%`;
+        if (teamBBar) teamBBar.style.width = `${teamBPct}%`;
+    }, 100);
+    
+    if (teamAValue) teamAValue.textContent = `${teamAPct}%`;
+    if (teamBValue) teamBValue.textContent = `${teamBPct}%`;
+}
+
+// ============================================================================
+// NEW: Load Head-to-Head Statistics (FIXED)
+// ============================================================================
+async function loadHeadToHeadStats(teamA, teamB, venue, season) {
+    const h2hStats = document.getElementById('h2h-stats');
+    const teamAStats = document.getElementById('team-a-stats');
+    const teamBStats = document.getElementById('team-b-stats');
+
+    if (!h2hStats || !teamAStats || !teamBStats) return;
+
+    // Show loading state
+    h2hStats.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+    teamAStats.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+    teamBStats.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+
+    try {
+        // Build query using match_by_match.csv data
+        const response = await fetch(`${API_BASE_URL}/api/recent-form?team_a=${encodeURIComponent(teamA)}&team_b=${encodeURIComponent(teamB)}&limit=100`);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch H2H stats: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const h2hMatches = data.head_to_head || [];
+        
+        // Calculate statistics from the matches
+        const totalMatches = h2hMatches.length;
+        const teamAWins = h2hMatches.filter(m => m.team_a_result === 'W').length;
+        const teamBWins = h2hMatches.filter(m => m.team_b_result === 'W').length;
+        const teamAWinPct = totalMatches > 0 ? (teamAWins / totalMatches * 100) : 0;
+        const teamBWinPct = totalMatches > 0 ? (teamBWins / totalMatches * 100) : 0;
+
+        // Update Head-to-Head Stats
+        h2hStats.innerHTML = `
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Total Matches</span>
+                <span class="metric-value text-white">${totalMatches}</span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">${teamA} Wins</span>
+                <span class="metric-value text-green-400">
+                    ${teamAWins} (${teamAWinPct.toFixed(1)}%)
+                </span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">${teamB} Wins</span>
+                <span class="metric-value text-red-400">
+                    ${teamBWins} (${teamBWinPct.toFixed(1)}%)
+                </span>
+            </div>
+        `;
+
+        // For venue stats, we'll calculate from ball-by-ball data if available
+        // For now, show aggregated stats
+        const teamAVenueMatches = totalMatches; // Simplified - you can refine this
+        const teamAVenueWins = teamAWins;
+        const teamAVenueWinPct = teamAWinPct;
+
+        const teamBVenueMatches = totalMatches;
+        const teamBVenueWins = teamBWins;
+        const teamBVenueWinPct = teamBWinPct;
+
+        // Update Team A Venue Stats
+        teamAStats.innerHTML = `
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Matches</span>
+                <span class="metric-value text-white">${teamAVenueMatches}</span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Wins</span>
+                <span class="metric-value text-green-400">${teamAVenueWins}</span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Win %</span>
+                <span class="metric-value text-yellow-400">${teamAVenueWinPct.toFixed(1)}%</span>
+            </div>
+        `;
+
+        // Update Team B Venue Stats
+        teamBStats.innerHTML = `
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Matches</span>
+                <span class="metric-value text-white">${teamBVenueMatches}</span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Wins</span>
+                <span class="metric-value text-green-400">${teamBVenueWins}</span>
+            </div>
+            <div class="metric-item flex justify-between">
+                <span class="metric-label text-gray-300">Win %</span>
+                <span class="metric-value text-yellow-400">${teamBVenueWinPct.toFixed(1)}%</span>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error loading H2H stats:', error);
+        
+        const errorHTML = '<div class="text-red-400 text-sm">Data unavailable</div>';
+        h2hStats.innerHTML = errorHTML;
+        teamAStats.innerHTML = errorHTML;
+        teamBStats.innerHTML = errorHTML;
+    }
+}
+
+// ============================================================================
+// NEW: Load Key Players (FIXED)
+// ============================================================================
+async function loadKeyPlayers(teamA, teamB, season) {
+    const teamAContainer = document.getElementById('results-team-a-key-players-content');
+    const teamBContainer = document.getElementById('results-team-b-key-players-content');
+
+    if (!teamAContainer || !teamBContainer) return;
+
+    // Show loading state
+    teamAContainer.innerHTML = '<div class="text-gray-400 text-sm">Loading key players...</div>';
+    teamBContainer.innerHTML = '<div class="text-gray-400 text-sm">Loading key players...</div>';
+
+    try {
+        // Use the correct endpoint from your backend
+        let url = `${API_BASE_URL}/api/key_players?team1=${encodeURIComponent(teamA)}&team2=${encodeURIComponent(teamB)}&limit=3`;
+        if (season) url += `&season=${encodeURIComponent(season)}`;
+
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch key players: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Key Players Response:', data);
+
+        // Display Team A Key Players
+        if (data.team1) {
+            displayKeyPlayersInResults(data.team1, teamAContainer, teamA);
+        }
+        
+        // Display Team B Key Players  
+        if (data.team2) {
+            displayKeyPlayersInResults(data.team2, teamBContainer, teamB);
+        }
+
+    } catch (error) {
+        console.error('Error loading key players:', error);
+        
+        const errorHTML = '<div class="text-red-400 text-sm">Key players data unavailable</div>';
+        teamAContainer.innerHTML = errorHTML;
+        teamBContainer.innerHTML = errorHTML;
+    }
+}
+
+function displayKeyPlayersInResults(data, container, teamName) {
+    if (!container) return;
+
+    const topBatters = data.top_batters || [];
+    const topBowlers = data.top_bowlers || [];
+
+    let html = `
+        <div class="mb-3">
+            <p class="text-sm text-gray-400">Top performers for ${teamName}</p>
+        </div>
+    `;
+
+    // Top Batters
+    html += `<div class="mb-3">`;
+    html += `<h5 class="font-semibold text-green-400 mb-2 text-sm">Top Batters</h5>`;
+    if (topBatters && topBatters.length > 0) {
+        topBatters.forEach(batter => {
+            html += `
+                <div class="p-2 bg-gray-800 rounded mb-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${batter.name || 'Unknown'}</span>
+                        <span class="text-green-400 font-bold text-sm">${batter.runs || 0} runs</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `<p class="text-gray-500 text-xs">No batting data available</p>`;
+    }
+    html += `</div>`;
+
+    // Top Bowlers
+    html += `<div>`;
+    html += `<h5 class="font-semibold text-red-400 mb-2 text-sm">Top Bowlers</h5>`;
+    if (topBowlers && topBowlers.length > 0) {
+        topBowlers.forEach(bowler => {
+            html += `
+                <div class="p-2 bg-gray-800 rounded mb-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm">${bowler.name || 'Unknown'}</span>
+                        <span class="text-red-400 font-bold text-sm">${bowler.wickets || 0} wkts</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `<p class="text-gray-500 text-xs">No bowling data available</p>`;
+    }
+    html += `</div>`;
+
+    container.innerHTML = html;
+}
+
+// ============================================================================
+// Momentum Indicators (Uses /api/recent-form)
+// ============================================================================
+async function updateMomentumIndicators(teamA, teamB) {
+    const teamAMomentum = document.getElementById('team-a-momentum');
+    const teamBMomentum = document.getElementById('team-b-momentum');
+
+    if (!teamAMomentum || !teamBMomentum) return;
+
+    teamAMomentum.innerHTML = '<div class="text-sm text-gray-400 py-1">Loading...</div>';
+    teamBMomentum.innerHTML = '<div class="text-sm text-gray-400 py-1">Loading...</div>';
+
+    function renderMomentum(container, results) {
+        container.innerHTML = '';
+        const maxSlots = 5;
+        const padded = (results || []).slice(0, maxSlots);
+        
+        while (padded.length < maxSlots) {
+            padded.push('N');
+        }
+
+        padded.forEach(result => {
+            const r = (result || 'N').toString().trim().toUpperCase();
+            let cls = '';
+            let text = '-';
+            
+            if (r === 'W') {
+                cls = 'form-win';
+                text = 'W';
+            } else if (r === 'L') {
+                cls = 'form-loss';
+                text = 'L';
+            }
+            
+            const div = document.createElement('div');
+            div.className = `form-indicator ${cls}`;
+            div.textContent = text;
+            container.appendChild(div);
+        });
+    }
+
+    try {
+        const url = `${API_BASE_URL}/api/recent-form?team_a=${encodeURIComponent(teamA || '')}&team_b=${encodeURIComponent(teamB || '')}&limit=5`;
+        const res = await fetch(url);
+        
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        
+        const json = await res.json();
+        const teamAResults = json.team_a_form || [];
+        const teamBResults = json.team_b_form || [];
+
+        renderMomentum(teamAMomentum, teamAResults);
+        renderMomentum(teamBMomentum, teamBResults);
+    } catch (err) {
+        console.error('Recent form fetch error:', err);
+        const errorMsg = '<div class="text-xs text-red-400 py-1">Form data unavailable</div>';
+        teamAMomentum.innerHTML = errorMsg;
+        teamBMomentum.innerHTML = errorMsg;
+    }
+}
+
+// ============================================================================
+// Venue Insights (Simulated - can be enhanced with real data)
+// ============================================================================
+function updateVenueInsights() {
+    const venueWinCtx = document.getElementById('venue-win-chart')?.getContext('2d');
+    if (!venueWinCtx) return;
+
+    if (venueWinChart) {
+        venueWinChart.destroy();
+    }
+
+    const battingFirstPct = Number((Math.random() * 100).toFixed(1));
+    const chasingPct = Number((100 - battingFirstPct).toFixed(1));
+
+    venueWinChart = new Chart(venueWinCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Batting First', 'Chasing'],
+            datasets: [{
+                label: 'Win Percentage',
+                data: [battingFirstPct, chasingPct],
+                backgroundColor: ['#f59e0b', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const v = context.parsed?.y ?? context.parsed;
+                            return `${context.dataset.label}: ${Number(v).toFixed(1)}%`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: function(value) { return value + '%'; } }
+                }
+            }
+        }
+    });
+
+    setText('batting-first-pct', `${battingFirstPct.toFixed(1)}%`);
+    setText('chasing-pct', `${chasingPct.toFixed(1)}%`);
+
+    setTimeout(() => {
+        const battingBar = document.getElementById('batting-first-bar');
+        const chasingBar = document.getElementById('chasing-bar');
+        if (battingBar) battingBar.style.width = `${battingFirstPct}%`;
+        if (chasingBar) chasingBar.style.width = `${chasingPct}%`;
+    }, 100);
+}
+
+// ============================================================================
+// Player Rivalries (Uses /api/get_top_player_rivalries)
+// ============================================================================
+async function loadTopPlayerRivalries(teamA, teamB, season) {
+    const container = document.getElementById('top-rivalries-container');
+    if (!container) return;
+
+    container.innerHTML = '<p class="text-gray-400">Loading rivalries...</p>';
+    
+    try {
+        let url = `${API_BASE_URL}/api/get_top_player_rivalries?team_a=${encodeURIComponent(teamA)}&team_b=${encodeURIComponent(teamB)}&num_rivalries=3`;
+        if (season) url += `&season=${encodeURIComponent(season)}`;
+
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+            throw new Error(`API ${res.status}`);
+        }
+
+        const data = await res.json();
+        const rivalries = data.top_rivalries || [];
+
+        if (!rivalries || rivalries.length === 0) {
+            container.innerHTML = '<p class="text-gray-400">No rivalry data found for this matchup.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        rivalries.forEach(r => {
+            const c = r.career_summary || {};
+            const perSeasonHTML = (r.per_season && r.per_season.length > 0)
+                ? `<details class="mt-2">
+                    <summary class="font-semibold cursor-pointer text-blue-300 hover:underline">Per-season Breakdown</summary>
+                    <table class="w-full text-sm mt-1 border border-gray-600 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-700">
+                            <tr><th class="p-1">Season</th><th class="p-1">Runs</th><th class="p-1">Balls</th><th class="p-1">Dismissals</th></tr>
+                        </thead>
+                        <tbody class="text-center">
+                            ${r.per_season.map(s => `<tr class="border-t border-gray-700">
+                                <td class="p-1">${s.Season}</td><td class="p-1">${s.Runs}</td>
+                                <td class="p-1">${s.Balls}</td><td class="p-1">${s.Dismissals}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </details>`
+                : '';
+
+            const card = `
+                <div class="bg-gray-800 text-white rounded-xl shadow-lg p-4 mb-3 border border-gray-700">
+                    <h4 class="text-lg font-bold mb-2">${r.batter} <span class="text-yellow-400">vs</span> ${r.bowler}</h4>
+                    <p class="text-sm mb-1 text-gray-300"><strong>Career Summary:</strong></p>
+                    <ul class="list-disc ml-5 text-sm text-gray-300">
+                        <li>Total Runs: ${c.total_runs ?? 0}</li>
+                        <li>Balls Faced: ${c.total_balls ?? 0}</li>
+                        <li>Strike Rate: ${c.strike_rate ?? 0}</li>
+                        <li>Dismissals: ${c.dismissals ?? 0}</li>
+                        <li>Average: ${c.average ?? '-'}</li>
+                    </ul>
+                    ${perSeasonHTML}
+                </div>`;
+            container.innerHTML += card;
+        });
+    } catch (err) {
+        console.error('Rivalry loading error:', err);
+        container.innerHTML = `<p class="text-red-400">⚠️ Unable to load player rivalry data.</p>`;
+    }
+}
+
+// ============================================================================
+// SECTION 2: BATSMEN ANALYSIS
+// ============================================================================
+
+async function initializeBatsmenAnalysis() {
+    try {
+        const [seasonsRes, playersRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/seasons`),
+            fetch(`${API_BASE_URL}/api/players`)
+        ]);
+
+        if (seasonsRes.ok) {
+            const data = await seasonsRes.json();
+            const seasons = Array.isArray(data) ? data : (data.seasons || []);
+            const batsmanSeasonSelect = document.getElementById('batsman-season-select');
+            if (batsmanSeasonSelect) {
+                batsmanSeasonSelect.innerHTML = '<option value="all">All Seasons</option>';
+                seasons.forEach(s => {
+                    batsmanSeasonSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                });
+            }
+        }
+
+        if (playersRes.ok) {
+            const data = await playersRes.json();
+            allBatsmen = Array.isArray(data) ? data : (data.players || []);
+            setupBatsmenSearch();
+        }
+    } catch (error) {
+        console.error('Error initializing batsmen analysis:', error);
+    }
+}
+
+function setupBatsmenSearch() {
+    const batsmanInput = document.getElementById('batsman-input');
+    const batsmanSuggestions = document.getElementById('batsman-suggestions');
+    const showAllBatsmenBtn = document.getElementById('show-all-batsmen-btn');
+    const closeBatsmenList = document.getElementById('close-batsmen-list');
+    const allBatsmenList = document.getElementById('all-batsmen-list');
+    const batsmenGrid = document.getElementById('batsmen-grid');
+    
+    if (batsmanInput) {
+        batsmanInput.addEventListener('input', () => handlePlayerSearch(batsmanInput, batsmanSuggestions, allBatsmen));
+        batsmanInput.addEventListener('focus', () => handlePlayerSearch(batsmanInput, batsmanSuggestions, allBatsmen));
+    }
+    
+    if (showAllBatsmenBtn) {
+        showAllBatsmenBtn.addEventListener('click', () => {
+            populatePlayerGrid(batsmenGrid, allBatsmen, batsmanInput, allBatsmenList);
+            showElement(allBatsmenList);
+        });
+    }
+    
+    if (closeBatsmenList) {
+        closeBatsmenList.addEventListener('click', () => hideElement(allBatsmenList));
+    }
+    
+    populatePlayerGrid(batsmenGrid, allBatsmen, batsmanInput, allBatsmenList);
+}
+
+async function handleAnalyzeBatsman() {
+    const batsmanName = document.getElementById('batsman-input')?.value.trim();
+    const season = document.getElementById('batsman-season-select')?.value;
+    
+    if (!batsmanName) {
+        alert('Please enter a batsman name');
+        return;
+    }
+
+    const loader = document.getElementById('batsmen-loader');
+    const resultsContent = document.getElementById('batsmen-results-content');
+    const analysisResults = document.getElementById('batsmen-analysis-results');
+
+    showElement(loader);
+    hideElement(resultsContent);
+    showElement(analysisResults);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/player-analysis`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                player_name: batsmanName,
+                season: season !== 'all' ? season : null
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayBatsmenAnalysisResults(data);
+        showElement(resultsContent);
+    } catch (error) {
+        console.error('Batsmen analysis error:', error);
+        alert(`Error analyzing batsman: ${error.message}`);
+    } finally {
+        hideElement(loader);
+    }
+}
+
+function displayBatsmenAnalysisResults(data) {
+    // Update player header
+    setText('batsman-name-header', data.player_info?.full_name || '');
+    setText('batsman-team', `Team: ${data.player_info?.team || 'N/A'}`);
+    setText('batsman-role', `Role: ${data.player_info?.role || 'N/A'}`);
+    setText('batsman-matches', `Matches: ${data.player_info?.matches || 0}`);
+
+    // Update key stats
+    setNumberText('total-runs', data.batting_stats?.runs || 0, 0);
+    setNumberText('total-balls', data.total_balls || 0, 0);
+    setNumberText('batting-avg', data.batting_stats?.average || 0);
+    setNumberText('strike-rate', data.batting_stats?.strike_rate || 0);
+    setNumberText('fifties', data.batting_stats?.fifties || 0, 0);
+    setNumberText('hundreds', data.batting_stats?.hundreds || 0, 0);
+
+    // Update phase breakdown
+    updateScoringPhaseBreakdown(data.detailed_analysis?.phase_breakdown);
+    
+    // Update form streaks
+    updateFormStreaks(data.detailed_analysis?.form_streaks);
+    
+    // Update pressure index
+    updatePressureIndex(data.detailed_analysis?.pressure_index);
+    
+    // Update boundaries
+    setNumberText('fours-count', data.detailed_analysis?.boundary_analysis?.fours || 0, 0);
+    setNumberText('sixes-count', data.detailed_analysis?.boundary_analysis?.sixes || 0, 0);
+    setText('boundary-pct', `${data.detailed_analysis?.boundary_analysis?.boundary_pct || 0}%`);
+    
+    // Update venue performance
+    updateVenuePerformanceTable(data.detailed_analysis?.venue_performance);
+    
+    // Update bowler matchups
+    updateBowlerMatchupsTable(data.detailed_analysis?.bowler_matchups);
+    
+    // Update dismissal patterns
+    updateDismissalPatterns(data.detailed_analysis?.dismissal_patterns);
+}
+
+function updateScoringPhaseBreakdown(phaseBreakdown) {
+    if (!phaseBreakdown) return;
+    
+    const phases = ['powerplay', 'middle', 'death'];
+    phases.forEach(phase => {
+        const data = phaseBreakdown[phase];
+        if (data) {
+            setNumberText(`${phase}-runs`, data.runs || 0, 0);
+            setNumberText(`${phase}-sr`, data.strike_rate || 0);
+            setNumberText(`${phase}-boundaries`, data.boundaries || 0, 0);
+        }
+    });
+}
+
+function updateFormStreaks(formStreaks) {
+    if (!formStreaks) return;
+    
+    setNumberText('innings-since-50', formStreaks.innings_since_last_50 || 0, 0);
+    setNumberText('innings-since-100', formStreaks.innings_since_last_100 || 0, 0);
+    setNumberText('recent-average', formStreaks.recent_average || 0);
+    setNumberText('recent-sr', formStreaks.recent_strike_rate || 0);
+}
+
+function updatePressureIndex(pressureIndex) {
+    if (!pressureIndex) return;
+    
+    setNumberText('chasing-avg', pressureIndex.chasing?.average || 0);
+    setNumberText('chasing-sr', pressureIndex.chasing?.strike_rate || 0);
+    setNumberText('chasing-innings', pressureIndex.chasing?.innings || 0, 0);
+    
+    setNumberText('setting-avg', pressureIndex.setting_target?.average || 0);
+    setNumberText('setting-sr', pressureIndex.setting_target?.strike_rate || 0);
+    setNumberText('setting-innings', pressureIndex.setting_target?.innings || 0, 0);
+    
+    setNumberText('death-over-sr', pressureIndex.death_overs?.strike_rate || 0);
+    setText('death-boundary-pct', `${pressureIndex.death_overs?.boundary_percentage || 0}%`);
+    setNumberText('death-runs-total', pressureIndex.death_overs?.runs || 0, 0);
+}
+
+function updateVenuePerformanceTable(venuePerformance) {
+    const tbody = document.getElementById('venue-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!venuePerformance || venuePerformance.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No venue data available</td></tr>';
+        return;
+    }
+    
+    venuePerformance.forEach(venue => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="font-medium">${venue.Venue}</td>
+            <td class="text-right">${venue.Runs}</td>
+            <td class="text-right">${venue.Balls}</td>
+            <td class="text-right">${venue.Outs}</td>
+            <td class="text-right">${venue.Average}</td>
+            <td class="text-right">${venue.SR}</td>
+            <td class="text-right">${venue.Fifties}</td>
+            <td class="text-right">${venue.Hundreds}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateBowlerMatchupsTable(bowlerMatchups) {
+    const tbody = document.getElementById('bowler-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!bowlerMatchups || bowlerMatchups.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No bowler matchup data available</td></tr>';
+        return;
+    }
+    
+    bowlerMatchups.forEach(bowler => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="font-medium">${bowler.Bowler}</td>
+            <td class="text-right">${bowler.Runs}</td>
+            <td class="text-right">${bowler.Balls}</td>
+            <td class="text-right">${bowler.Outs}</td>
+            <td class="text-right">${bowler.SR}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateDismissalPatterns(dismissalPatterns) {
+    const container = document.getElementById('dismissal-chart');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!dismissalPatterns) return;
+    
+    Object.entries(dismissalPatterns).forEach(([type, count]) => {
+        const element = document.createElement('div');
+        element.className = 'p-3 bg-gray-800 rounded-lg text-center';
+        element.innerHTML = `
+            <div class="text-lg font-bold text-white">${count}</div>
+            <div class="text-sm text-gray-400 capitalize">${type.replace('_', ' ')}</div>
+        `;
+        container.appendChild(element);
+    });
+}
+
+// ============================================================================
+// SECTION 3: BOWLER ANALYSIS
+// ============================================================================
+
+async function initializeBowlerAnalysis() {
+    try {
+        const [seasonsRes, bowlersRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/seasons`),
+            fetch(`${API_BASE_URL}/api/bowlers`).catch(() => fetch(`${API_BASE_URL}/api/players`))
+        ]);
+
+        if (seasonsRes.ok) {
+            const data = await seasonsRes.json();
+            const seasons = Array.isArray(data) ? data : (data.seasons || []);
+            const bowlerSeasonSelect = document.getElementById('bowler-season-select');
+            if (bowlerSeasonSelect) {
+                bowlerSeasonSelect.innerHTML = '<option value="all">All Seasons</option>';
+                seasons.forEach(s => {
+                    bowlerSeasonSelect.innerHTML += `<option value="${s}">${s}</option>`;
+                });
+            }
+        }
+
+        if (bowlersRes && bowlersRes.ok) {
+            const data = await bowlersRes.json();
+            allBowlers = Array.isArray(data) ? data : (data.bowlers || data.players || []);
+            setupBowlerSearch();
+        }
+    } catch (error) {
+        console.error('Error initializing bowler analysis:', error);
+    }
+}
+
+function setupBowlerSearch() {
+    const bowlerInput = document.getElementById('bowler-input');
+    const bowlerSuggestions = document.getElementById('bowler-suggestions');
+    const showAllBowlersBtn = document.getElementById('show-all-bowlers-btn');
+    const closeBowlersList = document.getElementById('close-bowlers-list');
+    const allBowlersList = document.getElementById('all-bowlers-list');
+    const bowlersGrid = document.getElementById('bowlers-grid');
+    
+    if (bowlerInput) {
+        bowlerInput.addEventListener('input', () => handlePlayerSearch(bowlerInput, bowlerSuggestions, allBowlers));
+        bowlerInput.addEventListener('focus', () => handlePlayerSearch(bowlerInput, bowlerSuggestions, allBowlers));
+    }
+    
+    if (showAllBowlersBtn) {
+        showAllBowlersBtn.addEventListener('click', () => {
+            populatePlayerGrid(bowlersGrid, allBowlers, bowlerInput, allBowlersList);
+            showElement(allBowlersList);
+        });
+    }
+    
+    if (closeBowlersList) {
+        closeBowlersList.addEventListener('click', () => hideElement(allBowlersList));
+    }
+    
+    populatePlayerGrid(bowlersGrid, allBowlers, bowlerInput, allBowlersList);
+}
+
+async function handleAnalyzeBowler() {
+    const bowlerName = document.getElementById('bowler-input')?.value.trim();
+    const season = document.getElementById('bowler-season-select')?.value;
+    
+    if (!bowlerName) {
+        alert('Please enter a bowler name');
+        return;
+    }
+
+    const loader = document.getElementById('bowler-loader');
+    const resultsContent = document.getElementById('bowler-results-content');
+    const analysisResults = document.getElementById('bowler-analysis-results');
+
+    showElement(loader);
+    hideElement(resultsContent);
+    showElement(analysisResults);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/bowler-analysis`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bowler_name: bowlerName,
+                season: season !== 'all' ? season : null
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        displayBowlerAnalysisResults(data);
+        showElement(resultsContent);
+    } catch (error) {
+        console.error('Bowler analysis error:', error);
+        alert(`Error analyzing bowler: ${error.message}`);
+    } finally {
+        hideElement(loader);
+    }
+}
+
+function displayBowlerAnalysisResults(data) {
+    // Update bowler header
+    setText('bowler-name-header', data.bowler_info?.full_name || '');
+    setText('bowler-team', `Team: ${data.bowler_info?.team || 'N/A'}`);
+    setText('bowler-role', `Role: ${data.bowler_info?.role || 'N/A'}`);
+    setText('bowler-matches', `Matches: ${data.bowler_info?.matches || 0}`);
+
+    // Update key stats
+    setNumberText('total-wickets', data.bowling_stats?.wickets || 0, 0);
+    setNumberText('total-balls-bowled', data.bowling_stats?.balls || 0, 0);
+    setNumberText('economy-rate', data.bowling_stats?.economy || 0);
+    setNumberText('bowler-strike-rate', data.bowling_stats?.strike_rate || 0);
+    setNumberText('bowling-avg', data.bowling_stats?.average || 0);
+    setText('best-figures', data.bowling_stats?.best_bowling || 'N/A');
+
+    // Update phase performance
+    updateBowlerPhasePerformance(data.detailed_analysis?.phase_wise_performance);
+    
+    // Update phase vs hand
+    updatePhaseVsHand(data.detailed_analysis?.phase_vs_hand);
+    
+    // Update favorite victims
+    updateFavoriteVictims(data.detailed_analysis?.favorite_victims);
+    
+    // Update pressure economy
+    updatePressureEconomy(data.detailed_analysis?.pressure_economy);
+    
+    // Update dismissal types
+    updateBowlerDismissalTypes(data.detailed_analysis?.dismissal_types);
+    
+    // Update batsmen matchups
+    updateBatsmenMatchupsTable(data.detailed_analysis?.batsmen_matchups);
+    
+    // Update venue performance
+    updateBowlerVenuePerformanceTable(data.detailed_analysis?.venue_performance);
+}
+
+function updateBowlerPhasePerformance(phasePerformance) {
+    if (!phasePerformance) return;
+    
+    const phases = ['powerplay', 'middle', 'death'];
+    phases.forEach(phase => {
+        const data = phasePerformance[phase];
+        if (data) {
+            setNumberText(`${phase}-economy`, data.economy_rate || 0);
+            setNumberText(`${phase}-wickets`, data.wickets || 0, 0);
+            setNumberText(`${phase}-sr`, data.strike_rate || 0);
+        }
+    });
+}
+
+function updatePhaseVsHand(phaseVsHand) {
+    if (!phaseVsHand) return;
+    
+    const phases = ['powerplay', 'middle', 'death'];
+    const hands = ['left', 'right'];
+    
+    phases.forEach(phase => {
+        const data = phaseVsHand[phase];
+        if (data) {
+            hands.forEach(hand => {
+                const handData = data[hand];
+                if (handData) {
+                    const prefix = phase === 'powerplay' ? 'pp' : phase === 'middle' ? 'mid' : 'death';
+                    setNumberText(`${prefix}-${hand}-eco`, handData.economy || 0);
+                    setNumberText(`${prefix}-${hand}-sr`, handData.strike_rate || 0);
+                }
+            });
+        }
+    });
+}
+
+function updateFavoriteVictims(favoriteVictims) {
+    const grid = document.getElementById('favorite-victims-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    if (!favoriteVictims || favoriteVictims.length === 0) {
+        grid.innerHTML = '<div class="col-span-3 text-center py-4 text-gray-500">No favorite victims data</div>';
+        return;
+    }
+    
+    favoriteVictims.forEach(victim => {
+        const element = document.createElement('div');
+        element.className = 'p-4 bg-gray-800 rounded-lg text-center';
+        element.innerHTML = `
+            <div class="text-2xl font-bold text-red-400">${victim.dismissals}</div>
+            <div class="text-sm text-gray-400 mt-1">${victim.batsman}</div>
+            <div class="text-xs text-gray-500">dismissals</div>
+        `;
+        grid.appendChild(element);
+    });
+}
+
+function updatePressureEconomy(pressureEconomy) {
+    if (!pressureEconomy) return;
+    
+    setNumberText('small-total-eco', pressureEconomy.defending_small_total?.economy || 0);
+    setNumberText('small-total-wkts', pressureEconomy.defending_small_total?.wickets || 0, 0);
+    setNumberText('small-total-matches', pressureEconomy.defending_small_total?.matches || 0, 0);
+    
+    setNumberText('par-total-eco', pressureEconomy.defending_par_total?.economy || 0);
+    setNumberText('par-total-wkts', pressureEconomy.defending_par_total?.wickets || 0, 0);
+    setNumberText('par-total-matches', pressureEconomy.defending_par_total?.matches || 0, 0);
+    
+    setNumberText('big-total-eco', pressureEconomy.defending_big_total?.economy || 0);
+    setNumberText('big-total-wkts', pressureEconomy.defending_big_total?.wickets || 0, 0);
+    setNumberText('big-total-matches', pressureEconomy.defending_big_total?.matches || 0, 0);
+}
+
+function updateBowlerDismissalTypes(dismissalTypes) {
+    const container = document.getElementById('bowler-dismissal-chart');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (!dismissalTypes) return;
+    
+    Object.entries(dismissalTypes).forEach(([type, count]) => {
+        const element = document.createElement('div');
+        element.className = 'p-3 bg-gray-800 rounded-lg text-center';
+        element.innerHTML = `
+            <div class="text-lg font-bold text-white">${count}</div>
+            <div class="text-sm text-gray-400 capitalize">${type.replace('_', ' ')}</div>
+        `;
+        container.appendChild(element);
+    });
+}
+
+function updateBatsmenMatchupsTable(batsmenMatchups) {
+    const tbody = document.getElementById('batsmen-matchup-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!batsmenMatchups || batsmenMatchups.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No batsmen matchup data available</td></tr>';
+        return;
+    }
+    
+    batsmenMatchups.forEach(matchup => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="font-medium">${matchup.Batter}</td>
+            <td class="text-right">${matchup.Balls}</td>
+            <td class="text-right">${matchup.RunsConceded}</td>
+            <td class="text-right">${matchup.Dismissals}</td>
+            <td class="text-right">${matchup.Avg}</td>
+            <td class="text-right">${matchup.StrikeRateBowler}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateBowlerVenuePerformanceTable(venuePerformance) {
+    const tbody = document.getElementById('bowler-venue-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (!venuePerformance || venuePerformance.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No venue data available</td></tr>';
+        return;
+    }
+    
+    venuePerformance.forEach(venue => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="font-medium">${venue.Venue}</td>
+            <td class="text-right">${venue.Wickets}</td>
+            <td class="text-right">${venue.RunsConceded}</td>
+            <td class="text-right">${venue.Balls}</td>
+            <td class="text-right">${venue.EconomyRate}</td>
+            <td class="text-right">${venue.StrikeRate}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// ============================================================================
+// SECTION 4: PLAYER COMPARISON
+// ============================================================================
+async function initializePlayerComparison() {
+    try {
+        // Fetch players list if not already loaded
+        if (!allPlayers || allPlayers.length === 0) {
+            const playersRes = await fetch(`${API_BASE_URL}/api/players`);
+            if (playersRes.ok) {
+                const data = await playersRes.json();
+                allPlayers = Array.isArray(data) ? data : (data.players || []);
+                console.log('Loaded players for comparison:', allPlayers.length);
+            }
+        }
+
+        // Setup search for Player A
+        const playerAInput = document.getElementById('player-a-input');
+        const playerASuggestions = document.getElementById('player-a-suggestions');
+        if (playerAInput && playerASuggestions) {
+            playerAInput.addEventListener('input', () => {
+                handlePlayerSearch(playerAInput, playerASuggestions, allPlayers);
+            });
+            playerAInput.addEventListener('focus', () => {
+                if (playerAInput.value.trim().length >= 1) {
+                    handlePlayerSearch(playerAInput, playerASuggestions, allPlayers);
+                }
+            });
+        }
+
+        // Setup search for Player B
+        const playerBInput = document.getElementById('player-b-input');
+        const playerBSuggestions = document.getElementById('player-b-suggestions');
+        if (playerBInput && playerBSuggestions) {
+            playerBInput.addEventListener('input', () => {
+                handlePlayerSearch(playerBInput, playerBSuggestions, allPlayers);
+            });
+            playerBInput.addEventListener('focus', () => {
+                if (playerBInput.value.trim().length >= 1) {
+                    handlePlayerSearch(playerBInput, playerBSuggestions, allPlayers);
+                }
+            });
+        }
+
+        // Load and populate seasons
+        if (allSeasons.length === 0) {
+            const seasonsRes = await fetch(`${API_BASE_URL}/api/seasons`);
+            if (seasonsRes.ok) {
+                const data = await seasonsRes.json();
+                allSeasons = Array.isArray(data) ? data : (data.seasons || []);
+            }
+        }
+
+        const h2hSeasonSelect = document.getElementById('h2h-season-select');
+        if (h2hSeasonSelect && allSeasons.length > 0) {
+            h2hSeasonSelect.innerHTML = '<option value="all">All Seasons</option>';
+            allSeasons.forEach(s => {
+                h2hSeasonSelect.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+        }
+
+        // Load and populate venues
+        if (allVenues.length === 0) {
+            const venuesRes = await fetch(`${API_BASE_URL}/api/venues`);
+            if (venuesRes.ok) {
+                const data = await venuesRes.json();
+                allVenues = Array.isArray(data) ? data : (data.venues || []);
+            }
+        }
+
+        const h2hVenueSelect = document.getElementById('h2h-venue-select');
+        if (h2hVenueSelect && allVenues.length > 0) {
+            h2hVenueSelect.innerHTML = '<option value="all">All Venues</option>';
+            allVenues.forEach(v => {
+                h2hVenueSelect.innerHTML += `<option value="${v}">${v}</option>`;
+            });
+        }
+
+        // Setup "Show All Players" buttons
+        setupShowAllPlayersButton('show-all-h2h-a-btn', 'all-h2h-a-list', 'h2h-a-grid', playerAInput);
+        setupShowAllPlayersButton('show-all-h2h-b-btn', 'all-h2h-b-list', 'h2h-b-grid', playerBInput);
+
+        // Setup close buttons
+        document.querySelectorAll('.close-h2h-a-list').forEach(btn => {
+            btn.addEventListener('click', () => {
+                hideElement(document.getElementById('all-h2h-a-list'));
+            });
+        });
+        document.querySelectorAll('.close-h2h-b-list').forEach(btn => {
+            btn.addEventListener('click', () => {
+                hideElement(document.getElementById('all-h2h-b-list'));
+            });
+        });
+
+        console.log('Player comparison initialized successfully');
+
+    } catch (error) {
+        console.error('Error initializing player comparison:', error);
+    }
+}
+
+function setupShowAllPlayersButton(buttonId, listId, gridId, inputElement) {
+    const button = document.getElementById(buttonId);
+    const list = document.getElementById(listId);
+    const grid = document.getElementById(gridId);
+
+    if (button && list && grid && inputElement) {
+        button.addEventListener('click', () => {
+            populatePlayerGrid(grid, allPlayers, inputElement, list);
+            showElement(list);
+        });
+    }
+}
+function setupPlayerSearch(inputId, suggestionsId, apiPath) {
+    const input = document.getElementById(inputId);
+    const box = document.getElementById(suggestionsId);
+    if (!input || !box) return;
+
+    let timer = null;
+    input.addEventListener('input', () => {
+        const q = input.value.trim();
+        clearTimeout(timer);
+        if (!q || q.length < 2) {
+            box.classList.add('hidden');
+            box.innerHTML = '';
+            return;
+        }
+        
+        timer = setTimeout(async () => {
+            try {
+                const url = `${API_BASE_URL}${apiPath}?query=${encodeURIComponent(q)}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    box.classList.add('hidden');
+                    box.innerHTML = '';
+                    return;
+                }
+                const data = await res.json();
+                const items = Array.isArray(data) ? data : (data.players || []);
+                if (!items || items.length === 0) {
+                    box.classList.add('hidden');
+                    box.innerHTML = '';
+                    return;
+                }
+                box.innerHTML = items.slice(0, 12).map(i => 
+                    `<div class="player-suggestion cursor-pointer p-2 hover:bg-gray-700">${i}</div>`
+                ).join('');
+                box.classList.remove('hidden');
+
+                box.querySelectorAll('.player-suggestion').forEach(el => {
+                    el.addEventListener('click', () => {
+                        input.value = el.textContent.trim();
+                        box.classList.add('hidden');
+                        box.innerHTML = '';
+                    });
+                });
+            } catch (err) {
+                console.error('Suggestion fetch error', err);
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+        }, 180);
+    });
+
+    input.addEventListener('blur', () => setTimeout(() => { box.classList.add('hidden'); }, 200));
+}
+
+async function handlePlayerCompare() {
+    const playerAInput = document.getElementById('player-a-input');
+    const playerBInput = document.getElementById('player-b-input');
+    const roleSelect = document.getElementById('player-compare-role');
+    const loader = document.getElementById('player-compare-loader');
+    const error = document.getElementById('player-compare-error');
+    const results = document.getElementById('player-compare-results');
+    
+    if (!playerAInput || !playerBInput || !roleSelect) return;
+
+    const playerA = playerAInput.value.trim();
+    const playerB = playerBInput.value.trim();
+    const analysisType = roleSelect.value;
+    
+    if (!playerA || !playerB) {
+        if (error) {
+            error.textContent = 'Please enter both player names';
+            showElement(error);
+            setTimeout(() => hideElement(error), 3500);
+        }
+        return;
+    }
+    
+    if (playerA === playerB) {
+        if (error) {
+            error.textContent = 'Please select two different players';
+            showElement(error);
+            setTimeout(() => hideElement(error), 3500);
+        }
+        return;
+    }
+
+    showElement(loader);
+    hideElement(results);
+    if (error) error.textContent = '';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/player-to-player-comparision/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                player_a: playerA, 
+                player_b: playerB, 
+                analysis_type: analysisType 
+            })
+        });
+        
+        if (!res.ok) throw new Error('API error ' + res.status);
+        
+        const json = await res.json();
+        if (json.status !== 'success' || !json.data) {
+            throw new Error(json.message || 'No data');
+        }
+
+        const data = json.data;
+        const type = analysisType || data.type || '';
+        
+        if (type === 'batsman_vs_bowler' || data.type === 'batsman_vs_bowler') {
+            renderBatsmanVsBowler(data);
+        } else {
+            renderBatsmanVsBatsman(data);
+        }
+        
+        showElement(results);
+    } catch (err) {
+        console.error(err);
+        if (error) {
+            error.textContent = 'Error: ' + (err.message || err);
+            showElement(error);
+            setTimeout(() => hideElement(error), 4500);
+        }
+    } finally {
+        hideElement(loader);
+    }
+}
+
+function renderBatsmanVsBatsman(payload) {
+    const pa = payload.player_a || payload.playerA || {};
+    const pb = payload.player_b || payload.playerB || {};
+
+    const sa = pa.stats?.overall || pa.summary || pa;
+    const sb = pb.stats?.overall || pb.summary || pb;
+
+    setText('pc-playerA-role', pa.role || 'Batsman');
+    setText('pc-playerB-role', pb.role || 'Batsman');
+    setText('pc-playerA-name', pa.name || pa.batter || 'Player A');
+    setText('pc-playerB-name', pb.name || pb.bowler || 'Player B');
+
+    document.getElementById('label-a-1').textContent = 'Runs';
+    document.getElementById('label-a-2').textContent = 'Average';
+    document.getElementById('label-a-3').textContent = 'SR';
+    document.getElementById('label-a-4').textContent = 'Innings';
+    document.getElementById('label-a-5').textContent = 'Balls';
+
+    document.getElementById('label-b-1').textContent = 'Runs';
+    document.getElementById('label-b-2').textContent = 'Average';
+    document.getElementById('label-b-3').textContent = 'SR';
+    document.getElementById('label-b-4').textContent = 'Innings';
+    document.getElementById('label-b-5').textContent = 'Balls';
+
+    setNumberText('pc-playerA-runs', sa.runs ?? 0, 0);
+    setNumberText('pc-playerA-avg', sa.average ?? 0);
+    setNumberText('pc-playerA-sr', sa.strike_rate ?? 0);
+    setNumberText('pc-playerA-inn', sa.innings ?? sa.appearances ?? 0, 0);
+    setNumberText('pc-playerA-balls', sa.balls ?? 0, 0);
+
+    setNumberText('pc-playerB-runs', sb.runs ?? 0, 0);
+    setNumberText('pc-playerB-avg', sb.average ?? 0);
+    setNumberText('pc-playerB-sr', sb.strike_rate ?? 0);
+    setNumberText('pc-playerB-inn', sb.innings ?? sb.appearances ?? 0, 0);
+    setNumberText('pc-playerB-balls', sb.balls ?? 0, 0);
+
+    const cmp = payload.comparison_metrics || payload.comparisonMetrics || [];
+    const overall = payload.overall_advantage || payload.overallAdvantage || payload.overall || '';
+
+    let html = '';
+
+    if (cmp.length) {
+        html += `<div class="mb-3"><strong class="text-white">Comparison Metrics</strong>
+            <div class="overflow-x-auto mt-2">
+                <table class="w-full text-sm text-gray-300">
+                    <thead class="text-xs text-gray-400">
+                        <tr>
+                            <th class="text-left px-2 py-1">Metric</th>
+                            <th class="text-right px-2 py-1">Player A</th>
+                            <th class="text-right px-2 py-1">Player B</th>
+                            <th class="text-left px-2 py-1">Advantage</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+        cmp.forEach(row => {
+            const aVal = (typeof row.player_a_value === 'number') ? 
+                (Number.isInteger(row.player_a_value) ? row.player_a_value : safeNum(row.player_a_value)) : 
+                (row.player_a_value ?? '-');
+            const bVal = (typeof row.player_b_value === 'number') ? 
+                (Number.isInteger(row.player_b_value) ? row.player_b_value : safeNum(row.player_b_value)) : 
+                (row.player_b_value ?? '-');
+            html += `<tr class="border-t border-gray-700">
+                <td class="px-2 py-1 text-gray-300">${row.metric}</td>
+                <td class="px-2 py-1 text-right text-white">${aVal}</td>
+                <td class="px-2 py-1 text-right text-white">${bVal}</td>
+                <td class="px-2 py-1 text-left text-gray-300">${row.advantage || '-'}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+    }
+
+    if (overall) {
+        html += `<div class="mb-2"><strong class="text-white">Overall Advantage:</strong> <span class="text-indigo-400 font-medium">${overall}</span></div>`;
+    }
+
+    const recentA = (pa.stats?.recent_innings || pa.recent_innings || []).slice(0, 5);
+    const recentB = (pb.stats?.recent_innings || pb.recent_innings || []).slice(0, 5);
+
+    if (recentA.length || recentB.length) {
+        html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+
+        if (recentA.length) {
+            html += `<div><div class="text-sm text-gray-300 font-semibold mb-1">Recent innings — ${pa.name || 'Player A'}</div><ul class="text-sm text-gray-300 list-disc pl-5">`;
+            recentA.forEach(it => {
+                const r = it.runs ?? 0;
+                const b = it.balls ?? '-';
+                const sr = (it.strike_rate !== undefined) ? safeNum(it.strike_rate) : '-';
+                html += `<li>Match ${it.match_id ?? '-'}: ${r} (${b}) SR ${sr}${it.dismissed ? ' ✖' : ''}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (recentB.length) {
+            html += `<div><div class="text-sm text-gray-300 font-semibold mb-1">Recent innings — ${pb.name || 'Player B'}</div><ul class="text-sm text-gray-300 list-disc pl-5">`;
+            recentB.forEach(it => {
+                const r = it.runs ?? 0;
+                const b = it.balls ?? '-';
+                const sr = (it.strike_rate !== undefined) ? safeNum(it.strike_rate) : '-';
+                html += `<li>Match ${it.match_id ?? '-'}: ${r} (${b}) SR ${sr}${it.dismissed ? ' ✖' : ''}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+
+        html += `</div>`;
+    }
+
+    const additionalInfo = document.getElementById('pc-additional-info');
+    if (additionalInfo) additionalInfo.innerHTML = html;
+}
+
+function renderBatsmanVsBowler(payload) {
+    const batterName = payload.batter || (payload.player_a && payload.player_a.name) || 'Batsman';
+    const bowlerName = payload.bowler || (payload.player_b && payload.player_b.name) || 'Bowler';
+    const s = payload.matchup_summary || {};
+    const b = payload.bowler_perspective || {};
+
+    setText('pc-playerA-role', 'Batsman');
+    setText('pc-playerB-role', 'Bowler');
+    setText('pc-playerA-name', batterName);
+    setText('pc-playerB-name', bowlerName);
+
+    document.getElementById('label-a-1').textContent = 'Runs';
+    document.getElementById('label-a-2').textContent = 'Average';
+    document.getElementById('label-a-3').textContent = 'SR';
+    document.getElementById('label-a-4').textContent = 'Encounters';
+    document.getElementById('label-a-5').textContent = 'Balls';
+
+    document.getElementById('label-b-1').textContent = 'Runs Conceded';
+    document.getElementById('label-b-2').textContent = 'Bowling Avg';
+    document.getElementById('label-b-3').textContent = 'Bowler SR';
+    document.getElementById('label-b-4').textContent = 'Wickets';
+    document.getElementById('label-b-5').textContent = 'Balls';
+
+    setNumberText('pc-playerA-runs', s.total_runs ?? 0, 0);
+    setNumberText('pc-playerA-avg', s.average ?? 0);
+    setNumberText('pc-playerA-sr', s.strike_rate ?? 0);
+    setNumberText('pc-playerA-inn', s.total_encounters ?? s.innings ?? 0, 0);
+    setNumberText('pc-playerA-balls', s.total_balls ?? 0, 0);
+
+    const bowlerAvg = b.average ?? null;
+    setNumberText('pc-playerB-runs', b.runs_conceded ?? s.total_runs ?? 0, 0);
+    setNumberText('pc-playerB-avg', bowlerAvg ?? (b.wickets_taken ? safeDivision(b.runs_conceded, b.wickets_taken) : 0));
+    setNumberText('pc-playerB-sr', b.strike_rate ?? 0);
+    setNumberText('pc-playerB-inn', b.wickets_taken ?? 0, 0);
+    setNumberText('pc-playerB-balls', b.dots_bowled ? (b.dots_bowled + (b.boundary_balls || 0)) : (s.total_balls ?? 0), 0);
+
+    const boundaryText = payload.boundaries ? `Boundaries: ${payload.boundaries.total_boundaries || 0}` : '';
+    const dominance = payload.dominance ? `Dominance: ${payload.dominance}` : '';
+    
+    const additionalInfo = document.getElementById('pc-additional-info');
+    if (additionalInfo) {
+        additionalInfo.innerHTML = [boundaryText, dominance].filter(Boolean).join(' • ');
+    }
+}
+
+function safeDivision(num, denom) {
+    num = Number(num);
+    denom = Number(denom);
+    if (!isFinite(num) || !isFinite(denom) || denom === 0) return '0.00';
+    return (num / denom).toFixed(2);
+}
+
+// ============================================================================
+// SECTION 5: INNINGS PROGRESSION (UPDATED WITH PROPER ERROR HANDLING)
+// ============================================================================
+
+async function initializeInningsProgression() {
+    try {
+        // Load teams
+        const teamsRes = await fetch(`${API_BASE_URL}/api/teams`);
+        if (teamsRes.ok) {
+            const data = await teamsRes.json();
+            const teams = Array.isArray(data) ? data : (data.teams || []);
+            const teamSelect = document.getElementById('progression-team');
+            if (teamSelect) {
+                teamSelect.innerHTML = '<option value="">Select Team</option>';
+                teams.forEach(team => {
+                    teamSelect.innerHTML += `<option value="${team}">${team}</option>`;
+                });
+            }
+        }
+
+        // Load seasons/years
+        const yearsRes = await fetch(`${API_BASE_URL}/api/seasons`);
+        if (yearsRes.ok) {
+            const data = await yearsRes.json();
+            const years = Array.isArray(data) ? data : (data.seasons || []);
+            const yearSelect = document.getElementById('progression-year');
+            if (yearSelect) {
+                yearSelect.innerHTML = '<option value="">Select Year</option>';
+                years.forEach(year => {
+                    yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+                });
+            }
+        }
+
+        // Load venues
+        const venuesRes = await fetch(`${API_BASE_URL}/api/venues`);
+        if (venuesRes.ok) {
+            const data = await venuesRes.json();
+            const venues = Array.isArray(data) ? data : (data.venues || []);
+            const venueList = document.getElementById('venue-list-progression');
+            if (venueList) {
+                venueList.innerHTML = '';
+                venues.forEach(venue => {
+                    const option = document.createElement('option');
+                    option.value = venue;
+                    venueList.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing innings progression:', error);
+        const errorDiv = document.getElementById('progression-error');
+        if (errorDiv) {
+            errorDiv.textContent = 'Failed to load form data. Please refresh the page.';
+            showElement(errorDiv);
+        }
+    }
+}
+
+async function handleAnalyzeProgression() {
+    const team = document.getElementById('progression-team')?.value;
+    const innings = document.getElementById('progression-innings')?.value;
+    const year = document.getElementById('progression-year')?.value;
+    const venue = document.getElementById('progression-venue')?.value;
+
+    // Validation
+    if (!team || !innings || !year) {
+        alert('Please select team, innings, and year');
+        return;
+    }
+
+    const loader = document.getElementById('progression-loader');
+    const errorDiv = document.getElementById('progression-error');
+    const contentDiv = document.getElementById('progression-content');
+    const resultsDiv = document.getElementById('progression-results');
+
+    // Show loading state
+    showElement(loader);
+    hideElement(errorDiv);
+    hideElement(contentDiv);
+    showElement(resultsDiv);
+
+    try {
+        const requestBody = {
+            team: team,
+            innings: parseInt(innings),
+            year: parseInt(year),
+            venue: venue || null,
+            max_plots: -1  // Get all available plots
+        };
+
+        console.log('Sending request:', requestBody); // Debug log
+
+        const response = await fetch(`${API_BASE_URL}/api/innings-progression`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        console.log('Response status:', response.status); // Debug log
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText); // Debug log
+            
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { error: `API request failed: ${response.status} - ${errorText}` };
+            }
+            
+            throw new Error(errorData.error || `API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data); // Debug log
+
+        // Update summary
+        const summary = document.getElementById('progression-summary');
+        if (summary) {
+            const venueText = data.venue ? ` at ${data.venue}` : '';
+            const fallbackText = data.fallback_info ? ' (using available data)' : '';
+            summary.textContent = `Analysis of ${data.matches_analyzed || 0} matches for ${data.team || team} in innings ${data.innings_requested || innings} during ${data.year || year}${venueText}${fallbackText}.`;
+        }
+
+        // Render plots
+        const container = document.getElementById('progression-container');
+        if (container) {
+            container.innerHTML = '';
+
+            if (data.plots && Array.isArray(data.plots) && data.plots.length > 0) {
+                data.plots.forEach(plot => {
+                    const plotWrapper = document.createElement('div');
+                    plotWrapper.className = 'progression-wrap';
+                    plotWrapper.style.marginBottom = '18px';
+
+                    const title = document.createElement('div');
+                    title.textContent = `Match ${plot.match_id}`;
+                    title.style.fontWeight = '600';
+                    title.style.marginBottom = '6px';
+                    title.style.color = '#e6eef8';
+
+                    const imageContainer = document.createElement('div');
+                    imageContainer.style.width = '100%';
+                    imageContainer.style.display = 'flex';
+                    imageContainer.style.flexDirection = 'column';
+                    imageContainer.style.gap = '8px';
+
+                    const titleContainer = document.createElement('div');
+                    titleContainer.style.padding = '0 6px';
+                    titleContainer.appendChild(title);
+
+                    const img = document.createElement('img');
+                    img.className = 'progression-image';
+                    img.src = plot.image_data_uri || `data:image/png;base64,${plot.image_base64 || ''}`;
+                    img.alt = `Match ${plot.match_id} progression`;
+                    img.onerror = () => {
+                        console.error('Failed to load image for match:', plot.match_id);
+                        img.alt = 'Failed to load image';
+                    };
+
+                    imageContainer.appendChild(titleContainer);
+                    imageContainer.appendChild(img);
+                    plotWrapper.appendChild(imageContainer);
+                    container.appendChild(plotWrapper);
+                });
+
+                // Show fallback info if present
+                if (data.fallback_info) {
+                    const fallbackDiv = document.createElement('div');
+                    fallbackDiv.className = 'mt-4 p-3 bg-yellow-900/30 border border-yellow-700/50 rounded-lg text-yellow-300 text-sm';
+                    
+                    let fallbackText = '';
+                    if (data.fallback_info.year_fallback) {
+                        const yf = data.fallback_info.year_fallback;
+                        fallbackText += `Note: Year ${yf.requested} not available. Showing data for year ${yf.used}. `;
+                    }
+                    if (data.fallback_info.innings_fallback) {
+                        fallbackText += data.fallback_info.innings_fallback.note;
+                    }
+                    
+                    fallbackDiv.textContent = fallbackText;
+                    container.appendChild(fallbackDiv);
+                }
+            } else {
+                container.innerHTML = '<div class="text-center py-8 text-gray-400">No progression charts available for the selected criteria.</div>';
+            }
+        }
+
+        showElement(contentDiv);
+
+    } catch (error) {
+        console.error('Innings progression error:', error);
+        if (errorDiv) {
+            errorDiv.textContent = `Error: ${error.message}`;
+            showElement(errorDiv);
+        }
+    } finally {
+        hideElement(loader);
+    }
+}
+
+// ============================================================================
+// COMMON HELPER FUNCTIONS (SHARED ACROSS SECTIONS)
+// ============================================================================
+
+function handlePlayerSearch(inputElement, suggestionsElement, playerList) {
+    if (!inputElement || !suggestionsElement) return;
+    
+    const searchTerm = inputElement.value.toLowerCase().trim();
+    suggestionsElement.innerHTML = '';
+    
+    if (searchTerm.length < 1) {
+        hideElement(suggestionsElement);
+        return;
+    }
+    
+    const filteredPlayers = playerList.filter(player => 
+        player.toLowerCase().includes(searchTerm)
+    ).slice(0, 10);
+    
+    if (filteredPlayers.length > 0) {
+        filteredPlayers.forEach(player => {
+            const div = document.createElement('div');
+            div.className = 'player-suggestion';
+            div.textContent = player;
+            div.addEventListener('click', () => {
+                inputElement.value = player;
+                hideElement(suggestionsElement);
+            });
+            suggestionsElement.appendChild(div);
+        });
+        showElement(suggestionsElement);
+    } else {
+        hideElement(suggestionsElement);
+    }
+}
+
+function populatePlayerGrid(gridElement, players, inputElement = null, listElement = null) {
+    if (!gridElement) return;
+    
+    gridElement.innerHTML = '';
+    
+    if (!players || players.length === 0) {
+        gridElement.innerHTML = '<div class="col-span-2 text-center py-4 text-gray-500">No players found</div>';
+        return;
+    }
+    
+    players.forEach(player => {
+        const playerElement = document.createElement('div');
+        playerElement.className = 'p-2 bg-gray-800 rounded text-sm cursor-pointer hover:bg-gray-700 transition-colors text-center';
+        playerElement.textContent = player;
+        
+        if (inputElement && listElement) {
+            playerElement.addEventListener('click', () => {
+                inputElement.value = player;
+                hideElement(listElement);
+                
+                // Auto-trigger analysis if appropriate
+                if (inputElement.id === 'bowler-input' && document.getElementById('bowler-stats')?.classList.contains('active')) {
+                    setTimeout(() => {
+                        document.getElementById('analyze-bowler-btn')?.click();
+                    }, 100);
+                }
+                if (inputElement.id === 'batsman-input' && document.getElementById('batsmen-stats')?.classList.contains('active')) {
+                    setTimeout(() => {
+                        document.getElementById('analyze-batsman-btn')?.click();
+                    }, 100);
+                }
+            });
+        }
+        
+        gridElement.appendChild(playerElement);
+    });
+}
+
+// ============================================================================
+// NAVIGATION & EVENT LISTENERS
+// ============================================================================
+
+function setupNavigation() {
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Remove active class from all links and sections
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            
+            // Add active class to clicked link
+            link.classList.add('active');
+            
+            // Show corresponding section
+            const targetId = link.getAttribute('href').substring(1);
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                
+                // Update page title
+                const pageTitle = document.getElementById('page-title');
+                const linkText = link.querySelector('span')?.textContent;
+                if (pageTitle && linkText) {
+                    pageTitle.textContent = linkText;
+                }
+            }
+        });
+    });
+}
+
+function attachEventListeners() {
+    // Pre-Match Predictor
+    const predictBtn = document.getElementById('predict-btn');
+    if (predictBtn) {
+        predictBtn.addEventListener('click', handlePredictClick);
+    }
+
+    // Batsmen Analysis
+    const analyzeBatsmanBtn = document.getElementById('analyze-batsman-btn');
+    if (analyzeBatsmanBtn) {
+        analyzeBatsmanBtn.addEventListener('click', handleAnalyzeBatsman);
+    }
+
+    // Bowler Analysis
+    const analyzeBowlerBtn = document.getElementById('analyze-bowler-btn');
+    if (analyzeBowlerBtn) {
+        analyzeBowlerBtn.addEventListener('click', handleAnalyzeBowler);
+    }
+
+    // Player Comparison
+    const compareBtn = document.getElementById('player-compare-btn');
+    if (compareBtn) {
+        compareBtn.addEventListener('click', handlePlayerCompare);
+    }
+
+    // Innings Progression
+    const analyzeProgressionBtn = document.getElementById('analyze-progression-btn');
+    if (analyzeProgressionBtn) {
+        analyzeProgressionBtn.addEventListener('click', handleAnalyzeProgression);
+    }
+
+    // Close suggestion boxes when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.player-search-container')) {
+            document.querySelectorAll('.player-suggestions').forEach(box => {
+                hideElement(box);
+            });
+        }
+    });
+}
+
+// ============================================================================
+// APPLICATION INITIALIZATION
+// ============================================================================
+
+async function initializeApplication() {
+    try {
+        // Initialize all sections
+        await initializePredictorForm();
+        await initializeBatsmenAnalysis();
+        await initializeBowlerAnalysis();
+        await initializePlayerComparison();
+        await initializeInningsProgression();
+        
+        // Setup navigation
+        setupNavigation();
+        
+        // Attach event listeners
+        attachEventListeners();
+        
+        console.log('Application initialized successfully');
+    } catch (error) {
+        console.error('Error initializing application:', error);
+    }
+}
+
+// Start the application when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeApplication);
+
+// ============================================================================
+// UTILITY: Export globals for cross-script usage (if needed)
+// ============================================================================
+window.API_BASE_URL = API_BASE_URL;
+window.allTeams = allTeams;
+window.allBatsmen = allBatsmen;
+window.allBowlers = allBowlers;
+window.allPlayers = allPlayers;
+</script>
